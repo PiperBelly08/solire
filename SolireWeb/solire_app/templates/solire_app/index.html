@@ -1,0 +1,44 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Solire</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" href="{% static 'solire_app/style.css' %}">
+</head>
+<body>
+    <h1>Solire</h1>
+    <section>
+        <h2>Data Overview</h2>
+        <h3>PH</h3>
+        <ul>
+            {% for ph in ph_data %}
+                <li>{{ ph.ph_value }} -- {{ ph.timestamps }}</li>
+            {% endfor %}
+        </ul>
+        <h3>Temperature</h3>
+        <ul>
+            {% for t in temperature_data %}
+                <li>{{ t.temperature_value }} -- {{ t.timestamps }}</li>
+            {% endfor %}
+        </ul>
+        <h3>Moisture</h3>
+        <ul>
+            {% for m in moisture_data %}
+                <li>{{ m.moisture_value }} -- {{ m.timestamps }}</li>
+            {% endfor %}
+        </ul>
+        <h3>Color</h3>
+        <ul>
+            {% for c in ph_data %}
+                <li>({{ c.red_value }},{{ c.green_value }},{{ c.blue_value }}) -- {{ c.timestamps }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+</body>
