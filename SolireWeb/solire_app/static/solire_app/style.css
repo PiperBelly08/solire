@@ -6,19 +6,18 @@ html {
 
 .sidebar {
     position: fixed;
-    background-color: #d9e8f8; /* Light background for the sidebar */
-    /*border-right: 1px solid #dee2e6; !* Add a border to the right *!*/
+    /*background-color: #d9e8f8; !* Light background for the sidebar *!*/
     height: 100vh;
     overflow-y: auto;
     z-index: 9999;
 }
-.sidebar .nav-link {
-    color: #343a40; /* Darker text for better readability */
-}
+/*.sidebar .nav-link {*/
+/*    color: #343a40; !* Darker text for better readability *!*/
+/*}*/
 .sidebar .nav-link:hover,
 .sidebar .nav-link.active {
-    background-color: #e9ecef; /* Slightly darker background on hover/active */
-    color: #007bff; /* Highlight with the primary color */
+    background-color: #e9ecef;
+    color: #007bff;
 }
 .main-content {
     padding: 20px;
