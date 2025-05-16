@@ -1,12 +1,12 @@
 from django.shortcuts import render
 
-from .models import Ph, Temperature, Moisture, Color
+# from .models import Ph, Temperature, Moisture, Color
 
 def index(request):
-    ph_data = Ph.objects.all()
-    temperature_data = Temperature.objects.all()
-    moisture_data = Moisture.objects.all()
-    color_data = Color.objects.all()
+    ph_data = 0
+    temperature_data = 0
+    moisture_data = 0
+    color_data = 0
 
     return render(
         request,
