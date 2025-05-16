@@ -51,7 +51,7 @@
                         <li class="nav-item">
                             <a class="nav-link rounded-3" href="#">
                                 <i class="bi bi-gear-wide-connected"></i>
-                                Sources
+                                Sensors
                             </a>
                         </li>
                         <li class="nav-item">
@@ -76,14 +76,14 @@
                 <section class="my-4 py-3 text-muted">
                     <div class="btn-toolbar my-3 d-flex justify-content-between">
                         <h2 class="fs-4 text-muted">Recommended Plants</h2>
-                        <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle">
-                            <i class="bi bi-calendar2-range-fill"></i>
-                            This week
-                        </button>
-                        <div class="btn-group me-2">
-                            <button type="button" class="btn btn-sm btn-outline-secondary"><i class="bi bi-share-fill"></i> Share</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer-fill"></i> Export</button>
-                        </div>
+{#                        <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle">#}
+{#                            <i class="bi bi-calendar2-range-fill"></i>#}
+{#                            This week#}
+{#                        </button>#}
+{#                        <div class="btn-group me-2">#}
+{#                            <button type="button" class="btn btn-sm btn-outline-secondary"><i class="bi bi-share-fill"></i> Share</button>#}
+{#                            <button type="button" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer-fill"></i> Export</button>#}
+{#                        </div>#}
                     </div>
                     <div class="table-responsive mt-4">
                         <table class="table table-md rounded-3">
@@ -99,15 +99,17 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td class="bg-transparent">1</td>
-                                    <td class="bg-transparent">-</td>
-                                    <td class="bg-transparent">0</td>
-                                    <td class="bg-transparent">0</td>
-                                    <td class="bg-transparent">0</td>
-                                    <td class="bg-transparent">(0, 0, 0)</td>
-                                    <td class="bg-transparent">15 May 2025</td>
-                                </tr>
+                                {% for sc in soil_conditions %}
+                                    <tr>
+                                        <td class="bg-transparent">1</td>
+                                        <td class="bg-transparent">-</td>
+                                        <td class="bg-transparent">{{ sc.ph_value }}</td>
+                                        <td class="bg-transparent">{{ sc.temperature_value }}°C</td>
+                                        <td class="bg-transparent">{{ sc.moisture_value }}%</td>
+                                        <td class="bg-transparent">({{ sc.rgb_value }})</td>
+                                        <td class="bg-transparent">{{ sc.timestamps }}</td>
+                                    </tr>
+                                {% endfor %}
                             </tbody>
                         </table>
                     </div>
