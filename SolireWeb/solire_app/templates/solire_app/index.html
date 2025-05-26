@@ -32,6 +32,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js" integrity="sha384-VFQrHzqBh5qiJIU0uGU5CIW3+OWpdGGJM9LBnGbuIH2mkICcFZ7lPd/AAtI7SNf7" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js" integrity="sha384-/RlQG9uf0M2vcTw3CX7fbqgbj/h8wKxw7C3zu9/GxcBPRKOEcESxaxufwRXqzq6n" crossorigin="anonymous"></script>
     <script src="https://cdn.datatables.net/v/bs5/jq-3.7.0/jszip-3.10.1/dt-2.3.0/b-3.2.3/b-colvis-3.2.3/b-html5-3.2.3/b-print-3.2.3/cr-2.1.0/fh-4.0.1/r-3.0.4/sp-2.3.3/datatables.min.js" integrity="sha384-mHQpk6uc59YtrJgGnk80iRWjB9d8EGpFasFvDLoxTxqEmcnHlCz5zsxkLX3o0vCV" crossorigin="anonymous"></script>
+
+    {#  MQTT  #}
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 </head>
 <body class="bg-light">
     <div class="container-fluid">
@@ -85,6 +88,7 @@
 {#                            <button type="button" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer-fill"></i> Export</button>#}
 {#                        </div>#}
                     </div>
+                    <button id="hello" class="btn btn-primary">Hello, World!</button>
                     <div class="table-responsive mt-4">
                         <table class="table table-md rounded-3">
                             <thead>
@@ -141,29 +145,25 @@
             }
         });
     </script>
+    <script>
+      const client = mqtt.connect(
+        "wss://piperbelly008:5wtOnOVrFYnyBP7T@piperbelly008.cloud.shiftr.io",
+        {
+          clientId: "SolireWeb",
+        }
+      );
 
-{#        <h3>PH</h3>#}
-{#        <ul>#}
-{#            {% for ph in ph_data %}#}
-{#                <li>{{ ph.ph_value }} -- {{ ph.timestamps }}</li>#}
-{#            {% endfor %}#}
-{#        </ul>#}
-{#        <h3>Temperature</h3>#}
-{#        <ul>#}
-{#            {% for t in temperature_data %}#}
-{#                <li>{{ t.temperature_value }} -- {{ t.timestamps }}</li>#}
-{#            {% endfor %}#}
-{#        </ul>#}
-{#        <h3>Moisture</h3>#}
-{#        <ul>#}
-{#            {% for m in moisture_data %}#}
-{#                <li>{{ m.moisture_value }} -- {{ m.timestamps }}</li>#}
-{#            {% endfor %}#}
-{#        </ul>#}
-{#        <h3>Color</h3>#}
-{#        <ul>#}
-{#            {% for c in color_data %}#}
-{#                <li>({{ c.red_value }}, {{ c.green_value }}, {{ c.blue_value }}) -- {{ c.timestamps }}</li>#}
-{#            {% endfor %}#}
-{#        </ul>#}
+      client.on("connect", function () {
+        console.log("connected!");
+        client.subscribe("Sensors");
+      });
+
+      client.on("message", function (topic, message) {
+        console.log(topic + ": " + message.toString());
+      });
+
+      document.querySelector("button#hello").addEventListener("click", function () {
+        client.publish("Sensors", "Hello from SolireWeb!");
+      });
+    </script>
 </body>
