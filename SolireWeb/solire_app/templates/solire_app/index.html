@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- CSS Reset -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css">
+{#    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css">#}
 
     {#  HTMX  #}
     <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
@@ -39,181 +39,290 @@
     {#  Chart.js  #}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
 </head>
-<body class="bg-light">
-    <div class="container-fluid">
-        <div class="row">
-            <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block sidebar collapse">
-                <div class="p-0 m-0">
-                    <ul class="nav d-flex flex-column flex-shrink-0 justify-content-between vstack gap-3">
-                        <li class="nav-item">
-                            <h1 class="fs-5">Solire</h1>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active rounded-3" aria-current="page" href="#">
-                                <i class="bi bi-speedometer2"></i>
-                                Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link rounded-3" href="#">
-                                <i class="bi bi-gear-wide-connected"></i>
-                                Sensors
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <button class="buttonToggler btn btn-primary d-md-none" style="width: 100%;">
-                                <i class="bi bi-list"></i>
-                            </button>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
+<body class="bg-slate-800">
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <i class="bi bi-speedometer2 text-white fs-4"></i>
+            <h4>AdminPro</h4>
+        </div>
+        <ul class="sidebar-nav nav nav-pills flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="#dashboard">
+                    <i class="bi bi-house-door"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#users">
+                    <i class="bi bi-people"></i>
+                    <span>Users</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#products">
+                    <i class="bi bi-box"></i>
+                    <span>Products</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#orders">
+                    <i class="bi bi-cart"></i>
+                    <span>Orders</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#analytics">
+                    <i class="bi bi-graph-up"></i>
+                    <span>Analytics</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#messages">
+                    <i class="bi bi-envelope"></i>
+                    <span>Messages</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#settings">
+                    <i class="bi bi-gear"></i>
+                    <span>Settings</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
 
-            <main class="col-md-9 ms-sm-auto col-lg-10 main-content">
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-                <button class="buttonToggler btn btn-primary d-md-none">
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Top Navigation -->
+        <nav class="navbar navbar-expand-lg navbar-light">
+            <div class="container-fluid">
+                <button class="toggle-btn" id="toggleSidebar">
                     <i class="bi bi-list"></i>
                 </button>
 
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
-                    <h1 class="fs-2">Dashboard</h1>
+                <div class="d-flex align-items-center gap-3 ms-auto">
+                    <!-- Search -->
+                    <div class="d-none d-md-block">
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="Search...">
+                            <button class="btn btn-outline-secondary" type="button">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Notifications -->
+                    <div class="dropdown">
+                        <button class="btn btn-link text-decoration-none position-relative" data-bs-toggle="dropdown">
+                            <i class="bi bi-bell fs-5 text-muted"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">3</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header">Notifications</h6></li>
+                            <li><a class="dropdown-item" href="#">New user registered</a></li>
+                            <li><a class="dropdown-item" href="#">Order #1234 completed</a></li>
+                            <li><a class="dropdown-item" href="#">Server maintenance scheduled</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Profile -->
+                    <div class="dropdown profile-dropdown">
+                        <button class="btn btn-link text-decoration-none d-flex align-items-center gap-2" data-bs-toggle="dropdown">
+                            <div class="user-avatar">JD</div>
+                            <span class="d-none d-md-inline text-muted">John Doe</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header">john.doe@example.com</h6></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Page Content -->
+        <div class="content-wrapper">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Home</a></li>
+                    <li class="breadcrumb-item active">Dashboard</li>
+                </ol>
+            </nav>
+
+            <!-- Page Title -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Dashboard</h1>
+                <button class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>Add New
+                </button>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card stats-card h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-title mb-2 text-white-50">Total Users</h6>
+                                    <p class="stat-number">1,847</p>
+                                    <small class="text-white-50">
+                                        <i class="bi bi-arrow-up"></i> +12% from last month
+                                    </small>
+                                </div>
+                                <i class="bi bi-people fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card stats-card blue h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-title mb-2 text-white-50">Revenue</h6>
+                                    <p class="stat-number">$49,847</p>
+                                    <small class="text-white-50">
+                                        <i class="bi bi-arrow-up"></i> +8% from last month
+                                    </small>
+                                </div>
+                                <i class="bi bi-currency-dollar fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card stats-card green h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-title mb-2 text-white-50">Orders</h6>
+                                    <p class="stat-number">326</p>
+                                    <small class="text-white-50">
+                                        <i class="bi bi-arrow-down"></i> -3% from last month
+                                    </small>
+                                </div>
+                                <i class="bi bi-cart fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card stats-card yellow h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-title mb-2 text-white-50">Conversion Rate</h6>
+                                    <p class="stat-number">3.2%</p>
+                                    <small class="text-white-50">
+                                        <i class="bi bi-arrow-up"></i> +1.2% from last month
+                                    </small>
+                                </div>
+                                <i class="bi bi-graph-up fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activities -->
+            <div class="row">
+                <div class="col-lg-8 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-white">
+                            <h5 class="card-title mb-0">Recent Orders</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Order ID</th>
+                                            <th>Customer</th>
+                                            <th>Product</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>#12847</td>
+                                            <td>John Smith</td>
+                                            <td>iPhone 14 Pro</td>
+                                            <td>$999.00</td>
+                                            <td><span class="badge bg-success">Completed</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>#12846</td>
+                                            <td>Sarah Johnson</td>
+                                            <td>MacBook Air</td>
+                                            <td>$1,299.00</td>
+                                            <td><span class="badge bg-warning">Pending</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>#12845</td>
+                                            <td>Mike Wilson</td>
+                                            <td>AirPods Pro</td>
+                                            <td>$249.00</td>
+                                            <td><span class="badge bg-success">Completed</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>#12844</td>
+                                            <td>Emma Davis</td>
+                                            <td>iPad Pro</td>
+                                            <td>$1,099.00</td>
+                                            <td><span class="badge bg-info">Processing</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <section class="my-4 py-3 text-muted">
-                    <div class="btn-toolbar my-3 d-flex justify-content-between">
-                        <h2 class="fs-4 text-muted">Recommended Plants</h2>
-{#                        <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle">#}
-{#                            <i class="bi bi-calendar2-range-fill"></i>#}
-{#                            This week#}
-{#                        </button>#}
-{#                        <div class="btn-group me-2">#}
-{#                            <button type="button" class="btn btn-sm btn-outline-secondary"><i class="bi bi-share-fill"></i> Share</button>#}
-{#                            <button type="button" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer-fill"></i> Export</button>#}
-{#                        </div>#}
+                <div class="col-lg-4 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-white">
+                            <h5 class="card-title mb-0">Quick Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-primary">
+                                    <i class="bi bi-plus-circle me-2"></i>Add Product
+                                </button>
+                                <button class="btn btn-outline-success">
+                                    <i class="bi bi-person-plus me-2"></i>Add User
+                                </button>
+                                <button class="btn btn-outline-info">
+                                    <i class="bi bi-file-earmark-text me-2"></i>Generate Report
+                                </button>
+                                <button class="btn btn-outline-warning">
+                                    <i class="bi bi-gear me-2"></i>System Settings
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    <canvas id="phChart" width="400" height="200"></canvas>
-                    <canvas id="moistureChart" width="400" height="200"></canvas>
-
-                    <button id="hello" class="btn btn-primary">Hello, World!</button>
-                    <div class="table-responsive mt-4">
-                        <table class="table table-md rounded-3">
-                            <thead>
-                                <tr>
-                                    <th scope="col" class="bg-transparent">#</th>
-                                    <th scope="col" class="bg-transparent" title="Tanaman yang dapat ditanam berdasarkan kondisi tanah dan parameter berupa pH, suhu, tingkat kelembaban, dan warna tanah."><i class="bi bi-flower1"></i> Rekomendasi Tanaman</th>
-                                    <th scope="col" class="bg-transparent"><i class="bi bi-rulers"></i> PH</th>
-                                    <th scope="col" class="bg-transparent"><i class="bi bi-thermometer"></i> Suhu</th>
-                                    <th scope="col" class="bg-transparent"><i class="bi bi-moisture"></i> Kelembaban (%)</th>
-                                    <th scope="col" class="bg-transparent"><i class="bi bi-palette-fill"></i> Warna</th>
-                                    <th scope="col" class="bg-transparent"><i class="bi bi-clock-history"></i> Waktu</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for sc in soil_conditions %}
-                                    <tr>
-                                        <td class="bg-transparent">1</td>
-                                        <td class="bg-transparent">-</td>
-                                        <td class="bg-transparent">{{ sc.ph_value }}</td>
-                                        <td class="bg-transparent">{{ sc.temperature_value }}°C</td>
-                                        <td class="bg-transparent">{{ sc.moisture_value }}%</td>
-                                        <td class="bg-transparent">({{ sc.rgb_value }})</td>
-                                        <td class="bg-transparent">{{ sc.timestamps }}</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-            </main>
+                </div>
+            </div>
         </div>
     </div>
 
-    <script>
-        document.querySelectorAll('.buttonToggler').forEach(button => {
-            button.addEventListener('click', function() {
-                document.getElementById('sidebar').classList.toggle('show');
-            });
-        });
+    <script defer src="{% static 'js/sidebar.js' %}"></script>
 
+    <script>
         let table = new DataTable('.table', {
             responsive: true,
-            layout: {
-                topStart: {
-                    buttons: [
-                        'pageLength',
-                        'excelHtml5',
-                        'csvHtml5',
-                        'pdfHtml5',
-                        'print',
-                        'colvis',
-                    ]
-                }
-            }
         });
     </script>
     <script>
-    const ctxPh = document.getElementById('phChart').getContext('2d');
-    const cfgPh = {
-        type: 'line',
-        data: {
-            labels: ['PH'],
-            datasets: [{
-                label: 'Data',
-                data: [],
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.2)',
-                    'rgba(54, 162, 235, 0.2)',
-                    'rgba(255, 206, 86, 0.2)',
-                    'rgba(75, 192, 192, 0.2)',
-                    'rgba(153, 102, 255, 0.2)',
-                    'rgba(255, 159, 64, 0.2)'
-                ],
-                borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)',
-                    'rgba(255, 159, 64, 1)'
-                ],
-                borderWidth: 1
-            }]
-        },
-    };
-
-    const pHChart = new Chart(ctxPh, cfgPh);
-
-    const ctxTemperature = document.getElementById('moistureChart').getContext('2d');
-    const cfgTemperature = {
-        type: 'line',
-        data: {
-            labels: ['Moisture'],
-            datasets: [{
-                label: 'Data',
-                data: [],
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.2)',
-                    'rgba(54, 162, 235, 0.2)',
-                    'rgba(255, 206, 86, 0.2)',
-                    'rgba(75, 192, 192, 0.2)',
-                    'rgba(153, 102, 255, 0.2)',
-                    'rgba(255, 159, 64, 0.2)'
-                ],
-                borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)',
-                    'rgba(255, 159, 64, 1)'
-                ],
-                borderWidth: 1
-            }]
-        },
-    };
-
-    const moistureChart = new Chart(ctxTemperature, cfgTemperature);
-
     const client = mqtt.connect(
         "wss://piperbelly008:5wtOnOVrFYnyBP7T@piperbelly008.cloud.shiftr.io",
         {
@@ -242,6 +351,5 @@
     document.querySelector("button#hello").addEventListener("click", function () {
         client.publish("Sensors", "Hello from SolireWeb!");
     });
-
     </script>
 </body>
