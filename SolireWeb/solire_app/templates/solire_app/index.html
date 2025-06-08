@@ -167,66 +167,62 @@
 
             <!-- Stats Cards -->
             <div class="row mb-4">
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card stats-card h-100">
+                <div class="col-12 mb-4">
+                    <div class="card stats-card h-100 w-100">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h6 class="card-title mb-2 text-white-50">Total Users</h6>
-                                    <p class="stat-number">1,847</p>
-                                    <small class="text-white-50">
-                                        <i class="bi bi-arrow-up"></i> +12% from last month
-                                    </small>
+                                    <h6 class="card-title mb-2 text-white-50">Recommended Plant(s)</h6>
+                                    <p class="stat-number">[]</p>
                                 </div>
                                 <i class="bi bi-people fs-1 opacity-50"></i>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-xl-3 col-md-6 mb-4">
+                <div class="col-xl-4 col-md-6 mb-4">
                     <div class="card stats-card blue h-100">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h6 class="card-title mb-2 text-white-50">Revenue</h6>
-                                    <p class="stat-number">$49,847</p>
+                                    <h6 class="card-title mb-2 text-white-50">PH</h6>
+                                    <p class="stat-number"><span id="realtime_ph">0</span></p>
                                     <small class="text-white-50">
                                         <i class="bi bi-arrow-up"></i> +8% from last month
                                     </small>
                                 </div>
-                                <i class="bi bi-currency-dollar fs-1 opacity-50"></i>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-xl-3 col-md-6 mb-4">
+                <div class="col-xl-4 col-md-6 mb-4">
                     <div class="card stats-card green h-100">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h6 class="card-title mb-2 text-white-50">Orders</h6>
-                                    <p class="stat-number">326</p>
+                                    <h6 class="card-title mb-2 text-white-50">Moisture</h6>
+                                    <p class="stat-number"><span id="realtime_moisture">0</span></p>
                                     <small class="text-white-50">
                                         <i class="bi bi-arrow-down"></i> -3% from last month
                                     </small>
                                 </div>
-                                <i class="bi bi-cart fs-1 opacity-50"></i>
+                                <i class="bi bi-percent fs-1 opacity-50"></i>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-xl-3 col-md-6 mb-4">
+                <div class="col-xl-4 col-md-6 mb-4">
                     <div class="card stats-card yellow h-100">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h6 class="card-title mb-2 text-white-50">Conversion Rate</h6>
-                                    <p class="stat-number">3.2%</p>
+                                    <h6 class="card-title mb-2 text-white-50">Temperature</h6>
+                                    <p class="stat-number"><span id="realtime_temperature">0</span>°</p>
                                     <small class="text-white-50">
                                         <i class="bi bi-arrow-up"></i> +1.2% from last month
                                     </small>
                                 </div>
-                                <i class="bi bi-graph-up fs-1 opacity-50"></i>
+                                <i class="bi bi-thermometer fs-1 opacity-50"></i>
                             </div>
                         </div>
                     </div>
@@ -245,11 +241,11 @@
                                 <table class="table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>Order ID</th>
-                                            <th>Customer</th>
-                                            <th>Product</th>
-                                            <th>Amount</th>
-                                            <th>Status</th>
+                                            <th>#</th>
+                                            <th>PH</th>
+                                            <th>Moisture</th>
+                                            <th>Temperature</th>
+                                            <th>Timestamps</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -259,27 +255,6 @@
                                             <td>iPhone 14 Pro</td>
                                             <td>$999.00</td>
                                             <td><span class="badge bg-success">Completed</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>#12846</td>
-                                            <td>Sarah Johnson</td>
-                                            <td>MacBook Air</td>
-                                            <td>$1,299.00</td>
-                                            <td><span class="badge bg-warning">Pending</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>#12845</td>
-                                            <td>Mike Wilson</td>
-                                            <td>AirPods Pro</td>
-                                            <td>$249.00</td>
-                                            <td><span class="badge bg-success">Completed</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>#12844</td>
-                                            <td>Emma Davis</td>
-                                            <td>iPad Pro</td>
-                                            <td>$1,099.00</td>
-                                            <td><span class="badge bg-info">Processing</span></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -315,7 +290,7 @@
         </div>
     </div>
 
-    <script defer src="{% static 'js/sidebar.js' %}"></script>
+    <script defer src="{% static 'solire_app/js/sidebar.js' %}"></script>
 
     <script>
         let table = new DataTable('.table', {
@@ -336,16 +311,12 @@
     });
 
     client.on("message", function (topic, message) {
-        {#console.log(topic + ": " + message.toString());#}
-        console.log(message.toString());
+        console.log(JSON.parse(message.toString()));
 
         const data = JSON.parse(message.toString());
-
-        pHChart.data.datasets[0].data.push(data.ph_value);
-        moistureChart.data.datasets[0].data.push(data.moisture_percent);
-
-        pHChart.update();
-        moistureChart.update();
+        document.querySelector("span#realtime_ph").textContent = data.ph_value;
+        document.querySelector("span#realtime_moisture").textContent = data.moisture_percent;
+        document.querySelector("span#realtime_temperature").textContent = data.temperature_c;
     });
 
     document.querySelector("button#hello").addEventListener("click", function () {
