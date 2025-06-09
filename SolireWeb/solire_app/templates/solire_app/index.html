@@ -7,9 +7,10 @@
 
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
 
     <!-- CSS Reset -->
-{#    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css">#}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css">
 
     {#  HTMX  #}
     <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
@@ -106,7 +107,7 @@
 
                 <div class="d-flex align-items-center gap-3 ms-auto">
                     <!-- Search -->
-                    <div class="d-none d-md-block">
+                    <div class="d-none d-md-block invisible">
                         <div class="input-group">
                             <input type="text" class="form-control" placeholder="Search...">
                             <button class="btn btn-outline-secondary" type="button">
@@ -116,7 +117,7 @@
                     </div>
 
                     <!-- Notifications -->
-                    <div class="dropdown">
+                    <div class="dropdown invisible">
                         <button class="btn btn-link text-decoration-none position-relative" data-bs-toggle="dropdown">
                             <i class="bi bi-bell fs-5 text-muted"></i>
                             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">3</span>
@@ -160,7 +161,7 @@
             <!-- Page Title -->
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="h3 mb-0">Dashboard</h1>
-                <button class="btn btn-primary">
+                <button class="btn btn-primary invisible">
                     <i class="bi bi-plus-circle me-2"></i>Add New
                 </button>
             </div>
@@ -175,7 +176,7 @@
                                     <h6 class="card-title mb-2 text-white-50">Recommended Plant(s)</h6>
                                     <p class="stat-number">[]</p>
                                 </div>
-                                <i class="bi bi-people fs-1 opacity-50"></i>
+                                <i class="bi bi-flower3 fs-1 opacity-50"></i>
                             </div>
                         </div>
                     </div>
@@ -187,9 +188,9 @@
                                 <div>
                                     <h6 class="card-title mb-2 text-white-50">PH</h6>
                                     <p class="stat-number"><span id="realtime_ph">0</span></p>
-                                    <small class="text-white-50">
-                                        <i class="bi bi-arrow-up"></i> +8% from last month
-                                    </small>
+{#                                    <small class="text-white-50">#}
+{#                                        <i class="bi bi-arrow-up"></i> +8% from last month#}
+{#                                    </small>#}
                                 </div>
                             </div>
                         </div>
@@ -202,9 +203,9 @@
                                 <div>
                                     <h6 class="card-title mb-2 text-white-50">Moisture</h6>
                                     <p class="stat-number"><span id="realtime_moisture">0</span></p>
-                                    <small class="text-white-50">
-                                        <i class="bi bi-arrow-down"></i> -3% from last month
-                                    </small>
+{#                                    <small class="text-white-50">#}
+{#                                        <i class="bi bi-arrow-down"></i> -3% from last month#}
+{#                                    </small>#}
                                 </div>
                                 <i class="bi bi-percent fs-1 opacity-50"></i>
                             </div>
@@ -218,9 +219,9 @@
                                 <div>
                                     <h6 class="card-title mb-2 text-white-50">Temperature</h6>
                                     <p class="stat-number"><span id="realtime_temperature">0</span>°</p>
-                                    <small class="text-white-50">
-                                        <i class="bi bi-arrow-up"></i> +1.2% from last month
-                                    </small>
+{#                                    <small class="text-white-50">#}
+{#                                        <i class="bi bi-arrow-up"></i> +1.2% from last month#}
+{#                                    </small>#}
                                 </div>
                                 <i class="bi bi-thermometer fs-1 opacity-50"></i>
                             </div>
@@ -249,13 +250,15 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr>
-                                            <td>#12847</td>
-                                            <td>John Smith</td>
-                                            <td>iPhone 14 Pro</td>
-                                            <td>$999.00</td>
-                                            <td><span class="badge bg-success">Completed</span></td>
-                                        </tr>
+                                        {% for sc in soil_conditions %}
+                                            <tr>
+                                                <td>{{ forloop.counter }}</td>
+                                                <td>{{ sc.ph_value }}</td>
+                                                <td>{{ sc.moisture_value }}</td>
+                                                <td>{{ sc.temperature_value }}</td>
+                                                <td>{{ sc.timestamps }}</td>
+                                            </tr>
+                                        {% endfor %}
                                     </tbody>
                                 </table>
                             </div>
@@ -270,12 +273,12 @@
                         </div>
                         <div class="card-body">
                             <div class="d-grid gap-2">
-                                <button class="btn btn-outline-primary">
-                                    <i class="bi bi-plus-circle me-2"></i>Add Product
-                                </button>
-                                <button class="btn btn-outline-success">
-                                    <i class="bi bi-person-plus me-2"></i>Add User
-                                </button>
+{#                                <button class="btn btn-outline-primary">#}
+{#                                    <i class="bi bi-plus-circle me-2"></i>Add Product#}
+{#                                </button>#}
+{#                                <button class="btn btn-outline-success">#}
+{#                                    <i class="bi bi-person-plus me-2"></i>Add User#}
+{#                                </button>#}
                                 <button class="btn btn-outline-info">
                                     <i class="bi bi-file-earmark-text me-2"></i>Generate Report
                                 </button>
@@ -291,13 +294,23 @@
     </div>
 
     <script defer src="{% static 'solire_app/js/sidebar.js' %}"></script>
+    <script>
+    let table = new DataTable('.table', {
+        responsive: true,
+    });
 
-    <script>
-        let table = new DataTable('.table', {
-            responsive: true,
-        });
-    </script>
-    <script>
+    function formatTimestamp(timestamp) {
+        const date = new Date(timestamp);
+
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+
+        return `${day}-${month}-${year} ${hours}:${minutes}`;
+    }
+
     const client = mqtt.connect(
         "wss://piperbelly008:5wtOnOVrFYnyBP7T@piperbelly008.cloud.shiftr.io",
         {
@@ -310,17 +323,86 @@
         client.subscribe("Sensors");
     });
 
-    client.on("message", function (topic, message) {
-        console.log(JSON.parse(message.toString()));
+    const intervalId = setInterval(() => {
+        fetchData('{% url 'solire_app:list_data' %}')
+            .then(response => {
+                console.log(response);
+                if (Array.isArray(response.data)) {
+                    table.clear();
+                    response.data.forEach(item => {
+                        table.row.add([
+                            item.id,
+                            item.ph_value,
+                            item.moisture_value,
+                            item.temperature_value,
+                            formatTimestamp(item.timestamps),
+                        ]).draw();
+                    });
+                } else {
+                    console.error('Data is not an array:', response.data);
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+            });
+    }, 1000 * 60);
 
-        const data = JSON.parse(message.toString());
-        document.querySelector("span#realtime_ph").textContent = data.ph_value;
-        document.querySelector("span#realtime_moisture").textContent = data.moisture_percent;
-        document.querySelector("span#realtime_temperature").textContent = data.temperature_c;
+    client.on("message", function (topic, message) {
+        message = message.toString().replace(/\\/g, "");
+        console.log(JSON.parse(message));
+
+        const data = JSON.parse(message);
+        document.querySelector("span#realtime_ph").textContent = Number(data.ph_value);
+        document.querySelector("span#realtime_moisture").textContent = Number(data.moisture_percent);
+        document.querySelector("span#realtime_temperature").textContent = Number(data.temperature_c);
+
+        insertData("{% url 'solire_app:insert_data' %}", JSON.stringify(data));
     });
 
     document.querySelector("button#hello").addEventListener("click", function () {
         client.publish("Sensors", "Hello from SolireWeb!");
     });
+
+    // Get CSRF token from meta tag
+    function getCSRFToken() {
+        return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    }
+
+    async function fetchData(url) {
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Fetch error:', error);
+            throw error;
+        }
+    }
+
+    async function insertData(url, data) {
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken(), // Include CSRF token
+                },
+                body: data
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                console.log('Success:', result);
+                return result;
+            } else {
+                console.error('Error:', result);
+                throw new Error(result);
+            }
+        } catch (error) {
+            console.error('Fetch error:', error);
+            throw error;
+        }
+    }
     </script>
 </body>
