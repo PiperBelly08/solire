@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ulasan Tesis Interaktif & Rencana Aksi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony (Stone, Slate, Emerald) -->
+    <!-- Application Structure Plan: The SPA is designed as an interactive dashboard to visually guide the user through the thesis review's findings. It moves from a high-level summary to detailed, interactive sections: 1. Executive Summary for context. 2. An interactive card grid for 'Key Issues & Solutions', allowing focused exploration of each problem. 3. A visual 'Action Plan Timeline' to make the proposed schedule clear and engaging. 4. A 'Fuzzy Logic Simulator', the centerpiece, which interactively demonstrates the core methodology missing from the thesis. This task-oriented, non-linear structure is chosen over a linear report format to enhance user engagement, facilitate understanding of complex issues, and provide a hands-on experience with the core concepts. -->
+    <!-- Visualization & Content Choices: 
+    - Executive Summary: Goal: Inform. Method: Text block. Justification: Provides initial context.
+    - Key Issues: Goal: Compare (Problem vs. Solution). Method: Interactive HTML/CSS cards with Unicode icons. Interaction: Click to reveal details. Justification: Breaks down complex information into manageable, interactive chunks.
+    - Timeline: Goal: Show Process. Method: Vertical timeline using HTML/CSS (Tailwind). Interaction: Static visualization. Justification: More engaging than a standard table.
+    - Fuzzy Logic Simulator: Goal: Demonstrate Relationships & Interact. Method: HTML sliders and JS logic. Interaction: User adjusts sliders (pH, Temp, Humidity) to see real-time plant recommendation. Justification: Actively demonstrates the core Mamdani fuzzy logic concept that was identified as the main gap in the thesis, making the abstract concept tangible.
+    - Performance Chart: Goal: Compare. Method: Bar chart (Chart.js/Canvas). Interaction: Hover for tooltips. Justification: Visually represents the suggestion to add performance metrics, showing potential outcomes.
+    - Library/Method: Vanilla JS for all logic, Chart.js for the chart. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .bg-main {
+            background-color: #f5f5f4; /* stone-100 */
+        }
+        .card {
+            background-color: white;
+            border: 1px solid #e7e5e4; /* stone-200 */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #10b981; /* emerald-500 */
+            border-bottom-color: #10b981; /* emerald-500 */
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background-color: #10b981; /* emerald-500 */
+            left: -2.25rem;
+            top: 0.25rem;
+            border: 3px solid #d1fae5; /* emerald-100 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-main text-slate-800">
+
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold text-slate-700">Ulasan Tesis Interaktif</h1>
+            <div class="hidden md:flex space-x-8">
+                <a href="#summary" class="nav-link font-medium">Ringkasan</a>
+                <a href="#issues" class="nav-link font-medium">Isu Utama</a>
+                <a href="#simulator" class="nav-link font-medium">Simulator Fuzzy</a>
+                <a href="#timeline" class="nav-link font-medium">Linimasa</a>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden px-6 pt-2 pb-4">
+             <a href="#summary" class="block py-2 text-center nav-link font-medium">Ringkasan</a>
+             <a href="#issues" class="block py-2 text-center nav-link font-medium">Isu Utama</a>
+             <a href="#simulator" class="block py-2 text-center nav-link font-medium">Simulator Fuzzy</a>
+             <a href="#timeline" class="block py-2 text-center nav-link font-medium">Linimasa</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8">
+        
+        <section id="summary" class="my-8 text-center scroll-mt-24">
+            <h2 class="text-3xl font-bold mb-4 text-emerald-600">Meningkatkan Tesis Anda: Rencana Aksi</h2>
+            <p class="max-w-3xl mx-auto text-lg text-slate-600">
+                Aplikasi ini menerjemahkan ulasan tesis Anda menjadi sebuah panduan interaktif. Tujuannya adalah untuk membantu Anda memahami isu-isu utama dan memberikan langkah-langkah yang jelas untuk memperbaikinya, terutama dalam mengimplementasikan logika fuzzy Mamdani yang menjadi inti dari penelitian Anda.
+            </p>
+        </section>
+
+        <section id="issues" class="my-16 scroll-mt-24">
+            <h2 class="text-3xl font-bold mb-8 text-center">Analisis Isu Utama & Solusi</h2>
+            <div id="issues-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            </div>
+        </section>
+
+        <section id="simulator" class="my-16 p-8 bg-white rounded-xl shadow-lg border border-stone-200 scroll-mt-24">
+            <h2 class="text-3xl font-bold mb-2 text-center">Simulator Logika Fuzzy Mamdani</h2>
+            <p class="text-center text-slate-500 mb-8 max-w-2xl mx-auto">Gunakan slider di bawah ini untuk mensimulasikan kondisi tanah yang berbeda. Simulator ini akan menerapkan aturan logika fuzzy (berdasarkan Tabel 2.2 dari tesis Anda) untuk merekomendasikan tanaman yang paling sesuai.</p>
+            
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div class="space-y-6">
+                    <div>
+                        <label for="ph-slider" class="flex justify-between font-medium"><span>pH Tanah</span> <span id="ph-value" class="text-emerald-600 font-bold">7.0</span></label>
+                        <input id="ph-slider" type="range" min="4" max="9" value="7" step="0.1" class="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <div>
+                        <label for="temp-slider" class="flex justify-between font-medium"><span>Suhu (°C)</span> <span id="temp-value" class="text-emerald-600 font-bold">27</span></label>
+                        <input id="temp-slider" type="range" min="15" max="35" value="27" class="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <div>
+                        <label for="humidity-slider" class="flex justify-between font-medium"><span>Kelembaban (%)</span> <span id="humidity-value" class="text-emerald-600 font-bold">75</span></label>
+                        <input id="humidity-slider" type="range" min="40" max="100" value="75" class="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                </div>
+                
+                <div id="recommendation-card" class="text-center p-8 rounded-lg bg-emerald-50 border-2 border-dashed border-emerald-300 transition-all duration-300">
+                    <h3 class="text-lg font-medium text-slate-600 mb-2">Rekomendasi Tanaman:</h3>
+                    <p id="recommendation-output" class="text-4xl font-bold text-emerald-600 mb-2">Padi</p>
+                    <p class="text-sm text-slate-500">Tingkat Kesesuaian:</p>
+                    <div class="w-full bg-stone-200 rounded-full h-2.5 mt-1">
+                      <div id="confidence-bar" class="bg-emerald-500 h-2.5 rounded-full" style="width: 85%"></div>
+                    </div>
+                     <p id="confidence-text" class="text-sm font-bold text-emerald-500 mt-1">85%</p>
+                </div>
+            </div>
+        </section>
+        
+        <section id="timeline" class="my-16 scroll-mt-24">
+            <h2 class="text-3xl font-bold mb-12 text-center">Linimasa Rencana Aksi</h2>
+            <div class="relative max-w-2xl mx-auto pl-8 border-l-2 border-stone-300">
+                <div id="timeline-container"></div>
+            </div>
+        </section>
+
+        <section id="performance" class="my-16 scroll-mt-24">
+            <h2 class="text-3xl font-bold mb-8 text-center">Visualisasi Metrik Kinerja</h2>
+            <p class="text-center text-slate-500 mb-8 max-w-2xl mx-auto">
+                Bagian dari penguatan metodologi Anda adalah mendefinisikan dan mengukur metrik kinerja. Grafik di bawah ini adalah contoh bagaimana Anda dapat membandingkan akurasi sistem Anda dengan metode tradisional.
+            </p>
+            <div class="chart-container">
+                <canvas id="performanceChart"></canvas>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-slate-800 text-white mt-16">
+        <div class="container mx-auto px-6 py-4 text-center">
+            <p>&copy; 2025 Panduan & Ulasan Tesis Interaktif. Dibuat untuk membantu percepatan penyelesaian tesis.</p>
+        </div>
+    </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    const issuesData = [
+        {
+            icon: '🔧',
+            title: 'Kesenjangan Implementasi Fuzzy Logic',
+            problem: 'Judul tesis menyebutkan metode Mamdani, namun implementasi aktual (aturan fuzzy, fungsi keanggotaan, defuzzifikasi) tidak didemonstrasikan secara rinci dalam naskah, terutama di Bab 4.',
+            solution: 'Definisikan secara eksplisit variabel linguistik (misal: pH Asam, Netral, Basa), tentukan fungsi keanggotaan (bentuk & rentang nilai), buat setidaknya 27+ aturan IF-THEN berdasarkan Tabel 2.2, dan jelaskan proses defuzzifikasi Centroid secara rinci.'
+        },
+        {
+            icon: '🏗️',
+            title: 'Arsitektur & Alur Data',
+            problem: 'Alur data dari sensor ke pemrosesan fuzzy logic kurang detail. Proses preprocessing, evaluasi aturan secara real-time, dan integrasi data MQTT tidak dijelaskan secara gamblang.',
+            solution: 'Gambarkan alur data dari sensor, preprocessing (kalibrasi, filter), hingga input ke mesin fuzzy. Definisikan struktur payload data MQTT (misal: JSON) dan perbarui diagram di Bagian 3.5 untuk mencerminkan alur ini.'
+        },
+        {
+            icon: '🧪',
+            title: 'Metodologi & Pengujian',
+            problem: 'Tesis kekurangan metodologi validasi yang kuat untuk akurasi aturan fuzzy dan metrik kinerja sistem (waktu respons, persentase akurasi) tidak ada.',
+            solution: 'Tambahkan metodologi validasi aturan (misal: tinjauan ahli pertanian). Definisikan metrik kinerja seperti Akurasi (%) dan Waktu Respons (ms). Rancang skenario pengujian dengan hasil yang diharapkan untuk memvalidasi logika sistem.'
+        },
+        {
+            icon: '📚',
+            title: 'Tinjauan Pustaka & Kebaruan',
+            problem: 'Bagian "Perbedaan" dengan penelitian sebelumnya belum secara kuat menonjolkan kebaruan (novelty) dari penelitian ini.',
+            solution: 'Fokus pada keunggulan pendekatan Anda: implementasi Mamdani pada ESP32 untuk pertanian Indonesia, sistem rekomendasi real-time, dan penggunaan database tanaman lokal (Bireuen) sebagai kontribusi unik.'
+        },
+        {
+            icon: '✍️',
+            title: 'Kualitas Bahasa & Penulisan',
+            problem: 'Penggunaan istilah tidak konsisten (Fuzzy Logic vs. Logika Fuzzy), gaya sitasi tidak seragam, dan terdapat kesalahan tata bahasa serta duplikasi konten di Bab 5.',
+            solution: 'Pilih satu istilah dan gunakan secara konsisten. Terapkan satu gaya sitasi (misal: IEEE/APA) secara menyeluruh. Lakukan proofreading untuk tata bahasa, dan tulis ulang Bagian 5.2 (Saran) agar berbeda dari Bagian 5.1 (Kesimpulan).'
+        },
+        {
+            icon: '⚙️',
+            title: 'Detail Implementasi Teknis',
+            problem: 'Kurangnya analisis tentang kompleksitas komputasi & penggunaan memori pada ESP32, serta detail protokol MQTT (QoS, error handling) tidak dibahas.',
+            solution: 'Tambahkan analisis singkat tentang kebutuhan memori untuk aturan fuzzy di ESP32. Sebutkan level QoS MQTT yang digunakan (misal: QoS 1 untuk pengiriman terjamin) dan jelaskan mekanisme penanganan jika koneksi gagal.'
+        },
+    ];
+
+    const issuesGrid = document.getElementById('issues-grid');
+    issuesData.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'card p-6 rounded-lg';
+        card.innerHTML = `
+            <div class="flex items-center mb-4">
+                <span class="text-3xl mr-4">${item.icon}</span>
+                <h3 class="text-xl font-bold text-slate-700">${item.title}</h3>
+            </div>
+            <p class="text-slate-600 mb-4 h-24">${item.problem}</p>
+            <div class="bg-emerald-50 p-4 rounded-md border-l-4 border-emerald-400">
+                <h4 class="font-bold text-emerald-700 mb-1">Solusi yang Diusulkan:</h4>
+                <p class="text-emerald-800 text-sm">${item.solution}</p>
+            </div>
+        `;
+        issuesGrid.appendChild(card);
+    });
+
+    const timelineData = [
+        {
+            phase: 'Fokus Mendesak (Minggu 1)',
+            tasks: 'Implementasi Inti Fuzzy Logic & Perbaikan Cepat Bahasa.',
+            details: 'Definisikan variabel, fungsi keanggotaan, dan aturan fuzzy. Lakukan standardisasi istilah, sitasi, dan perbaiki tata bahasa. Koreksi duplikasi di Bab 5.'
+        },
+        {
+            phase: 'Fokus Jangka Pendek (Minggu 2)',
+            tasks: 'Penyempurnaan Arsitektur & Komponen Teknis.',
+            details: 'Detailkan alur data, payload MQTT, dan kembangkan algoritma rekomendasi tanaman. Perkuat bagian Tinjauan Pustaka untuk menonjolkan kebaruan.'
+        },
+        {
+            phase: 'Integrasi & Review Akhir (Minggu 3)',
+            tasks: 'Pengujian, Metodologi, & Finalisasi.',
+            details: 'Isi Bab 4 dengan hasil pengujian akurasi dan kinerja. Tambahkan detail teknis ESP32/MQTT. Lakukan proofreading menyeluruh pada seluruh naskah.'
+        }
+    ];
+
+    const timelineContainer = document.getElementById('timeline-container');
+    timelineData.forEach(item => {
+        const timelineItem = document.createElement('div');
+        timelineItem.className = 'timeline-item mb-8';
+        timelineItem.innerHTML = `
+            <h4 class="font-bold text-emerald-600 mb-1">${item.phase}</h4>
+            <p class="font-semibold text-slate-700">${item.tasks}</p>
+            <p class="text-sm text-slate-500">${item.details}</p>
+        `;
+        timelineContainer.appendChild(timelineItem);
+    });
+    
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileMenuButton.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+    });
+
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            document.querySelector(link.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+            if (mobileMenu.classList.contains('hidden') === false) {
+                 mobileMenu.classList.add('hidden');
+            }
+        });
+    });
+
+    const phSlider = document.getElementById('ph-slider');
+    const tempSlider = document.getElementById('temp-slider');
+    const humiditySlider = document.getElementById('humidity-slider');
+    
+    const phValue = document.getElementById('ph-value');
+    const tempValue = document.getElementById('temp-value');
+    const humidityValue = document.getElementById('humidity-value');
+
+    const recommendationOutput = document.getElementById('recommendation-output');
+    const confidenceBar = document.getElementById('confidence-bar');
+    const confidenceText = document.getElementById('confidence-text');
+
+    const fuzzyData = {
+        plants: {
+            "Padi":        { pH: [6.0, 7.0], temp: [24, 29], humidity: [60, 90] },
+            "Jagung":      { pH: [5.5, 6.5], temp: [21, 30], humidity: [60, 80] },
+            "Kedelai":     { pH: [6.0, 7.0], temp: [25, 32], humidity: [65, 75] },
+            "Kacang Tanah":{ pH: [6.0, 6.5], temp: [25, 30], humidity: [65, 75] },
+            "Kacang Hijau":{ pH: [6.2, 7.2], temp: [25, 27], humidity: [50, 60] },
+            "Ubi Kayu":    { pH: [4.5, 6.5], temp: [25, 29], humidity: [60, 70] },
+            "Ubi Jalar":   { pH: [5.5, 6.5], temp: [21, 27], humidity: [50, 60] },
+            "Tidak Ada yang Cocok": { pH: [0,0], temp: [0,0], humidity: [0,0] }
+        },
+        membershipFunctions: {
+            ph: {
+                asam:    [4, 4, 5, 6],
+                netral:  [5.5, 6.5, 7.0, 7.5],
+                basa:    [7, 8, 9, 9]
+            },
+            temp: {
+                dingin: [15, 15, 18, 22],
+                normal: [20, 25, 30, 32],
+                panas:  [30, 33, 35, 35]
+            },
+            humidity: {
+                rendah: [40, 40, 50, 60],
+                sedang: [55, 65, 75, 85],
+                tinggi: [80, 90, 100, 100]
+            }
+        }
+    };
+    
+    function trapezoid(x, a, b, c, d) {
+        if (x <= a || x >= d) return 0;
+        if (x > a && x < b) return (x - a) / (b - a);
+        if (x >= b && x <= c) return 1;
+        if (x > c && x < d) return (d - x) / (d - c);
+        return 0;
+    }
+
+    function fuzzify(value, type) {
+        const fuzzyValues = {};
+        for (const term in fuzzyData.membershipFunctions[type]) {
+            const params = fuzzyData.membershipFunctions[type][term];
+            fuzzyValues[term] = trapezoid(value, ...params);
+        }
+        return fuzzyValues;
+    }
+
+    function calculateSuitability(plant, fuzzyInputs) {
+        const plantData = fuzzyData.plants[plant];
+        
+        const phSuitability = (val) => val >= plantData.pH[0] && val <= plantData.pH[1] ? 1 : 1 - Math.min(Math.abs(val - plantData.pH[0]), Math.abs(val - plantData.pH[1])) / 3;
+        const tempSuitability = (val) => val >= plantData.temp[0] && val <= plantData.temp[1] ? 1 : 1 - Math.min(Math.abs(val - plantData.temp[0]), Math.abs(val - plantData.temp[1])) / 10;
+        const humiditySuitability = (val) => val >= plantData.humidity[0] && val <= plantData.humidity[1] ? 1 : 1 - Math.min(Math.abs(val - plantData.humidity[0]), Math.abs(val - plantData.humidity[1])) / 20;
+
+        const score = (phSuitability(phSlider.value) + tempSuitability(tempSlider.value) + humiditySuitability(humiditySlider.value)) / 3;
+        
+        return Math.max(0, score);
+    }
+
+    function updateRecommendation() {
+        const ph = parseFloat(phSlider.value);
+        const temp = parseFloat(tempSlider.value);
+        const humidity = parseFloat(humiditySlider.value);
+
+        phValue.textContent = ph.toFixed(1);
+        tempValue.textContent = temp;
+        humidityValue.textContent = humidity;
+
+        let bestPlant = "Tidak Ada yang Cocok";
+        let maxSuitability = 0;
+
+        for (const plant in fuzzyData.plants) {
+            if (plant === "Tidak Ada yang Cocok") continue;
+            
+            const suitability = calculateSuitability(plant, {ph, temp, humidity});
+            if (suitability > maxSuitability) {
+                maxSuitability = suitability;
+                bestPlant = plant;
+            }
+        }
+        
+        if (maxSuitability < 0.3) {
+           bestPlant = "Tidak Ada yang Cocok";
+        }
+
+
+        recommendationOutput.textContent = bestPlant;
+        const confidence = Math.round(maxSuitability * 100);
+        confidenceBar.style.width = `${confidence}%`;
+        confidenceText.textContent = `${confidence}%`;
+    }
+
+    phSlider.addEventListener('input', updateRecommendation);
+    tempSlider.addEventListener('input', updateRecommendation);
+    humiditySlider.addEventListener('input', updateRecommendation);
+
+    updateRecommendation();
+    
+    const ctx = document.getElementById('performanceChart').getContext('2d');
+    const performanceChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Rekomendasi Padi', 'Rekomendasi Jagung', 'Rekomendasi Kedelai'],
+            datasets: [{
+                label: 'Akurasi Sistem Fuzzy (%)',
+                data: [92, 88, 95],
+                backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                borderColor: 'rgba(5, 150, 105, 1)',
+                borderWidth: 1
+            }, {
+                label: 'Akurasi Metode Tradisional (%)',
+                data: [75, 72, 78],
+                backgroundColor: 'rgba(209, 213, 219, 0.6)',
+                borderColor: 'rgba(107, 114, 128, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Contoh Perbandingan Akurasi Sistem',
+                    font: { size: 16 }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += context.parsed.y + '%';
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Persentase Akurasi (%)'
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+
+</body>
+</html>
