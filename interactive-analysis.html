@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisis Interaktif & Simulator Sistem Rekomendasi Tanaman</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Add Chart.js Annotation Plugin CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
+    <script>
+        // Register Chart.js Annotation Plugin immediately after its loading
+        // This ensures ChartjsPluginAnnotation is defined when Chart.register is called.
+        Chart.register(ChartjsPluginAnnotation);
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Beige & Sage -->
+    <!-- Application Structure Plan: The application is designed as a single-page dashboard with four distinct, navigable sections: 1) Summary & Action Plan, 2) Fuzzy Logic Simulator, 3) System Architecture, and 4) Plant Database. This thematic structure was chosen over a linear report format to improve usability. It allows a user to quickly grasp the overall project status and key issues in the summary, then dive deep into the most critical and complex part—the fuzzy logic—via an interactive simulator. The architecture and data sections provide necessary context. This non-linear approach empowers the user to explore the thesis's required enhancements in a way that is most relevant to them, directly addressing the report's goal of clarifying the path to completion. -->
+    <!-- Visualization & Content Choices: 
+        - Action Plan: Report Info -> Prioritized task list. Goal -> Organize/Inform. Viz/Presentation -> Interactive Kanban Board. Interaction -> View tasks in stages. Justification -> Translates the static action plan into a dynamic project view, clarifying workflow and priorities. Library/Method -> HTML/CSS/JS.
+        - Fuzzy Logic System: Report Info -> Missing fuzzy logic implementation details. Goal -> Explain/Simulate. Viz/Presentation -> Input sliders linked to multiple Chart.js graphs for membership functions and output. Interaction -> User adjusts sliders (pH, temp, humidity) to see real-time updates on fuzzification, rule activation, and the final defuzzified recommendation. Justification -> This is the core interactive element. It demystifies the "black box" of fuzzy logic, which is the central problem identified in the report, and provides a powerful tool for understanding and testing the system's logic. Library/Method -> Chart.js.
+        - System Architecture: Report Info -> Lack of a clear data flow diagram. Goal -> Organize/Inform. Viz/Presentation -> Diagram built with styled HTML divs. Interaction -> Hover effects to highlight components. Justification -> Visually clarifies the end-to-end data flow from sensor to UI, addressing a key documentation gap in the thesis. Library/Method -> HTML/CSS/Tailwind.
+        - Plant Data: Report Info -> Use of "Table 2.2" as a knowledge base. Goal -> Inform/Compare. Viz/Presentation -> Interactive HTML Table. Interaction -> Sort/Filter data. Justification -> Makes the foundational agricultural knowledge from the thesis easily accessible, searchable, and serves as the data source for the simulator, connecting the system's logic back to its domain knowledge. Library/Method -> HTML/JS. 
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F5F5DC; /* Warm Beige */
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link.active {
+            border-bottom-color: #4A552A; /* Sage */
+            color: #4A552A;
+            font-weight: 600;
+        }
+        .nav-link:hover {
+            border-bottom-color: #6B7A40;
+            color: #6B7A40;
+        }
+        .card {
+            background-color: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 250px;
+            max-height: 250px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 300px;
+                max-height: 300px;
+            }
+        }
+        .slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #4A552A;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        .slider-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #D1D5DB;
+            border-radius: 9999px;
+        }
+        .architecture-box {
+            border: 2px solid #6B7A40;
+            background-color: #F0F2E6;
+            transition: all 0.3s ease;
+        }
+        .architecture-box:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .arrow {
+            color: #4A552A;
+            font-weight: bold;
+            font-size: 2rem;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold text-[#4A552A]">Analisis Tesis & Simulator</h1>
+            <div class="hidden md:flex space-x-8">
+                <a href="#ringkasan" class="nav-link active">Ringkasan</a>
+                <a href="#simulator" class="nav-link">Simulator Fuzzy</a>
+                <a href="#arsitektur" class="nav-link">Arsitektur</a>
+                <a href="#database" class="nav-link">Data Tanaman</a>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden px-6 pb-4">
+            <a href="#ringkasan" class="block py-2 nav-link-mobile">Ringkasan</a>
+            <a href="#simulator" class="block py-2 nav-link-mobile">Simulator Fuzzy</a>
+            <a href="#arsitektur" class="block py-2 nav-link-mobile">Arsitektur</a>
+            <a href="#database" class="block py-2 nav-link-mobile">Data Tanaman</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8">
+        
+        <!-- Section: Ringkasan & Rencana Aksi -->
+        <section id="ringkasan" class="page-section mb-16 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-2 text-[#4A552A]">Ringkasan & Rencana Aksi</h2>
+            <p class="text-center text-lg text-gray-600 max-w-3xl mx-auto mb-12">
+                Analisis ini menyoroti kekuatan fundamental dari tesis Anda, sekaligus mengidentifikasi kesenjangan kritis yang memerlukan perhatian segera. Bagian ini merangkum temuan utama dan menyajikan rencana aksi yang terstruktur untuk memandu penyelesaian tesis secara efektif dan tepat waktu.
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-8 mb-12">
+                <div class="card rounded-lg p-6">
+                    <h3 class="text-2xl font-bold mb-4 text-green-700">✅ Kekuatan</h3>
+                    <ul class="list-disc list-inside space-y-2 text-gray-700">
+                        <li>Topik penelitian yang relevan dan berdampak praktis.</li>
+                        <li>Fokus pada kondisi pertanian lokal di Bireuen, Indonesia.</li>
+                        <li>Integrasi perangkat keras (ESP32, sensor) yang fungsional.</li>
+                        <li>Pipeline transmisi data via MQTT (Shiftr.io) telah teruji.</li>
+                        <li>Basis pengetahuan awal (Tabel 2.2 Tanaman Pangan) tersedia.</li>
+                    </ul>
+                </div>
+                <div class="card rounded-lg p-6">
+                    <h3 class="text-2xl font-bold mb-4 text-red-700">⚠️ Kesenjangan Kritis</h3>
+                    <ul class="list-disc list-inside space-y-2 text-gray-700">
+                        <li>Implementasi Logika Fuzzy Mamdani belum ada (aturan & fungsi).</li>
+                        <li>Algoritma rekomendasi tanaman belum diformalkan.</li>
+                        <li>Bab 4 (Hasil & Pembahasan) belum lengkap dan tidak ada validasi.</li>
+                        <li>Detail teknis implementasi (kompleksitas, QoS MQTT) kurang.</li>
+                        <li>Masalah kualitas penulisan dan duplikasi konten.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3 class="text-2xl font-bold text-center mb-6 text-[#4A552A]">Rencana Aksi Prioritas</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="card p-4 rounded-lg">
+                    <h4 class="font-bold text-lg border-b-2 border-red-500 pb-2 mb-4">🔴 Segera (Kritis)</h4>
+                    <div class="space-y-2 text-sm text-gray-700">
+                        <p class="bg-red-50 p-2 rounded">Implementasi & formalisasi sistem Fuzzy Mamdani.</p>
+                        <p class="bg-red-50 p-2 rounded">Definisikan semua variabel linguistik & fungsi keanggotaan.</p>
+                        <p class="bg-red-50 p-2 rounded">Bangun set aturan fuzzy lengkap berdasarkan Tabel 2.2.</p>
+                        <p class="bg-red-50 p-2 rounded">Perbaiki masalah bahasa, format, & duplikasi Bab 5.</p>
+                    </div>
+                </div>
+                <div class="card p-4 rounded-lg">
+                    <h4 class="font-bold text-lg border-b-2 border-yellow-500 pb-2 mb-4">🟡 Dampak Tinggi</h4>
+                    <div class="space-y-2 text-sm text-gray-700">
+                        <p class="bg-yellow-50 p-2 rounded">Mulai isi Bab 4 dengan hasil pengujian awal Fuzzy.</p>
+                        <p class="bg-yellow-50 p-2 rounded">Perjelas arsitektur & alur data MQTT ke engine fuzzy.</p>
+                        <p class="bg-yellow-50 p-2 rounded">Formalisasikan Algoritma Rekomendasi Tanaman.</p>
+                    </div>
+                </div>
+                <div class="card p-4 rounded-lg">
+                    <h4 class="font-bold text-lg border-b-2 border-blue-500 pb-2 mb-4">🔵 Penyempurnaan</h4>
+                    <div class="space-y-2 text-sm text-gray-700">
+                        <p class="bg-blue-50 p-2 rounded">Perkuat tinjauan pustaka untuk menonjolkan kebaruan.</p>
+                        <p class="bg-blue-50 p-2 rounded">Kembangkan metodologi validasi untuk akurasi aturan fuzzy.</p>
+                        <p class="bg-blue-50 p-2 rounded">Definisikan metrik performa (akurasi, waktu respon).</p>
+                        <p class="bg-blue-50 p-2 rounded">Lengkapi detail teknis (kompleksitas di ESP32, QoS MQTT).</p>
+                    </div>
+                </div>
+                <div class="card p-4 rounded-lg">
+                    <h4 class="font-bold text-lg border-b-2 border-green-500 pb-2 mb-4">🟢 Finalisasi</h4>
+                    <div class="space-y-2 text-sm text-gray-700">
+                        <p class="bg-green-50 p-2 rounded">Pastikan integrasi mulus antar semua komponen sistem.</p>
+                        <p class="bg-green-50 p-2 rounded">Validasi fungsionalitas sistem secara keseluruhan.</p>
+                        <p class="bg-green-50 p-2 rounded">Lakukan proofreading akhir dan cek format.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Simulator Fuzzy -->
+        <section id="simulator" class="page-section mb-16 hidden scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-2 text-[#4A552A]">Simulator Logika Fuzzy Interaktif</h2>
+            <p class="text-center text-lg text-gray-600 max-w-3xl mx-auto mb-12">
+                Ini adalah alat untuk memahami "kotak hitam" dari sistem Fuzzy Mamdani Anda. Geser slider untuk mengubah nilai input dari sensor dan lihat secara real-time bagaimana sistem memprosesnya: mulai dari fuzzifikasi, evaluasi aturan, hingga menghasilkan rekomendasi tanaman yang konkret melalui defuzzifikasi.
+            </p>
+            
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- Input Controls -->
+                <div class="lg:col-span-1 card rounded-lg p-6 space-y-6">
+                    <h3 class="text-xl font-bold">Input Sensor</h3>
+                    <div>
+                        <label for="ph-slider" class="block font-medium text-gray-700">pH Tanah: <span id="ph-value" class="font-bold text-[#4A552A]">6.5</span></label>
+                        <input id="ph-slider" type="range" min="0" max="14" value="6.5" step="0.1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-track">
+                    </div>
+                    <div>
+                        <label for="temp-slider" class="block font-medium text-gray-700">Suhu (°C): <span id="temp-value" class="font-bold text-[#4A552A]">27</span></label>
+                        <input id="temp-slider" type="range" min="10" max="40" value="27" step="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-track">
+                    </div>
+                    <div>
+                        <label for="humidity-slider" class="block font-medium text-gray-700">Kelembaban (%): <span id="humidity-value" class="font-bold text-[#4A552A]">75</span></label>
+                        <input id="humidity-slider" type="range" min="0" max="100" value="75" step="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-track">
+                    </div>
+                </div>
+
+                <!-- Membership Functions -->
+                <div class="lg:col-span-2 card rounded-lg p-6">
+                    <h3 class="text-xl font-bold mb-4">Visualisasi Fungsi Keanggotaan (Fuzzifikasi)</h3>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="chart-container"><canvas id="phChart"></canvas></div>
+                        <div class="chart-container"><canvas id="tempChart"></canvas></div>
+                        <div class="chart-container"><canvas id="humidityChart"></canvas></div>
+                    </div>
+                </div>
+
+                <!-- Output and Recommendation -->
+                <div class="lg:col-span-3 card rounded-lg p-6">
+                     <h3 class="text-xl font-bold mb-4">Hasil & Rekomendasi</h3>
+                     <div class="grid md:grid-cols-2 gap-8 items-center">
+                         <div>
+                            <h4 class="text-lg font-semibold">Aturan Fuzzy yang Aktif:</h4>
+                            <div id="active-rules" class="mt-2 text-sm space-y-1 h-24 overflow-y-auto bg-gray-50 p-2 rounded">
+                                <p>Geser slider untuk melihat aturan...</p>
+                            </div>
+                            <h4 class="text-lg font-semibold mt-4">Proses Defuzzifikasi (Centroid):</h4>
+                            <div class="chart-container mt-2"><canvas id="outputChart"></canvas></div>
+                         </div>
+                         <div class="text-center bg-[#F0F2E6] p-8 rounded-lg">
+                            <h4 class="text-lg font-semibold mb-2">Rekomendasi Tanaman:</h4>
+                            <p id="recommendation-output" class="text-4xl font-bold text-[#4A552A]">Padi</p>
+                            <p class="text-gray-600">dengan</p>
+                            <h4 class="text-lg font-semibold mt-2 mb-1">Tingkat Kesesuaian:</h4>
+                            <p id="confidence-output" class="text-3xl font-bold text-green-600">85%</p>
+                         </div>
+                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Arsitektur -->
+        <section id="arsitektur" class="page-section mb-16 hidden scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-2 text-[#4A552A]">Arsitektur Sistem & Alur Data</h2>
+            <p class="text-center text-lg text-gray-600 max-w-3xl mx-auto mb-12">
+                Diagram ini memperjelas alur data end-to-end dari sistem Anda. Ini menunjukkan bagaimana komponen fisik (sensor), protokol komunikasi (MQTT), dan backend (Django) bekerja sama untuk memproses data dan menyajikannya kepada pengguna, dengan `scikit-fuzzy` sebagai otaknya.
+            </p>
+            <div class="flex flex-col items-center space-y-4 md:space-y-0">
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 w-full">
+                    <!-- Sensor Node -->
+                    <div class="architecture-box p-4 rounded-lg text-center">
+                        <div class="text-3xl">📡</div>
+                        <h4 class="font-bold">Node Sensor</h4>
+                        <p class="text-sm">ESP32, Sensor pH, Suhu, Kelembaban</p>
+                    </div>
+
+                    <div class="arrow hidden md:block">&rarr;</div>
+                    <div class="arrow md:hidden">&darr;</div>
+
+                    <!-- MQTT -->
+                    <div class="architecture-box p-4 rounded-lg text-center">
+                        <div class="text-3xl">☁️</div>
+                        <h4 class="font-bold">Broker MQTT</h4>
+                        <p class="text-sm">Shiftr.io</p>
+                    </div>
+
+                    <div class="arrow hidden md:block">&rarr;</div>
+                    <div class="arrow md:hidden">&darr;</div>
+
+                    <!-- Backend -->
+                    <div class="architecture-box p-4 rounded-lg text-center">
+                        <div class="text-3xl">⚙️</div>
+                        <h4 class="font-bold">Backend Server</h4>
+                        <p class="text-sm">Django + paho-mqtt</p>
+                    </div>
+                </div>
+
+                <div class="arrow my-4">&darr;</div>
+
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 w-full">
+                    <!-- Frontend -->
+                    <div class="architecture-box p-4 rounded-lg text-center">
+                        <div class="text-3xl">🖥️</div>
+                        <h4 class="font-bold">Frontend Web</h4>
+                        <p class="text-sm">HTML, CSS, JS</p>
+                    </div>
+
+                    <div class="arrow hidden md:block">&larr;</div>
+                     <div class="arrow md:hidden">&darr;</div>
+
+                    <!-- Database -->
+                    <div class="architecture-box p-4 rounded-lg text-center">
+                        <div class="text-3xl">🗄️</div>
+                        <h4 class="font-bold">Database</h4>
+                        <p class="text-sm">SQLite (via Django ORM)</p>
+                    </div>
+                    
+                    <div class="arrow hidden md:block">&larr;</div>
+                    <div class="arrow md:hidden">&darr;</div>
+
+
+                    <!-- Fuzzy Engine -->
+                    <div class="architecture-box p-4 rounded-lg text-center border-4 border-red-500">
+                        <div class="text-3xl">🧠</div>
+                        <h4 class="font-bold">Engine Logika Fuzzy</h4>
+                        <p class="text-sm">scikit-fuzzy</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Database -->
+        <section id="database" class="page-section hidden scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-2 text-[#4A552A]">Basis Data Tanaman Pangan</h2>
+            <p class="text-center text-lg text-gray-600 max-w-3xl mx-auto mb-12">
+                Ini adalah data dari Tabel 2.2 dalam tesis Anda, yang menjadi dasar pengetahuan untuk aturan fuzzy. Tabel interaktif ini memungkinkan Anda untuk menyortir dan memfilter data untuk dengan mudah membandingkan kondisi optimal untuk setiap tanaman.
+            </p>
+            <div class="card rounded-lg p-6 overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="p-3 font-semibold">No</th>
+                            <th class="p-3 font-semibold">Nama Tanaman</th>
+                            <th class="p-3 font-semibold">pH Optimal</th>
+                            <th class="p-3 font-semibold">Suhu Optimal (°C)</th>
+                            <th class="p-3 font-semibold">Kelembaban Optimal (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="plant-table-body">
+                        <!-- Data will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // Mobile Menu
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileMenuButton.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+    });
+
+    // Navigation Logic
+    const navLinks = document.querySelectorAll('nav a');
+    const sections = document.querySelectorAll('.page-section');
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const id = entry.target.getAttribute('id');
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${id}`) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+        });
+    }, { rootMargin: '-20% 0px -80% 0px' });
+
+    sections.forEach(section => {
+        observer.observe(section);
+    });
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = link.getAttribute('href');
+            const targetSection = document.querySelector(targetId);
+
+            sections.forEach(s => s.classList.add('hidden'));
+            targetSection.classList.remove('hidden');
+            
+            // For smooth scroll effect
+            window.scrollTo({
+                top: targetSection.offsetTop - 80,
+                behavior: 'smooth'
+            });
+
+            // Update active link on click
+            navLinks.forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+            if (mobileMenu.offsetParent !== null) mobileMenu.classList.add('hidden');
+        });
+    });
+
+    const plantData = [
+        { id: 1, name: 'Padi', ph: [6.0, 7.0], temp: [24, 29], humidity: [60, 90] },
+        { id: 2, name: 'Jagung', ph: [5.5, 7.0], temp: [21, 30], humidity: [60, 80] },
+        { id: 3, name: 'Kedelai', ph: [6.0, 7.0], temp: [20, 25], humidity: [65, 75] },
+        { id: 4, name: 'Kacang Tanah', ph: [5.0, 6.5], temp: [25, 30], humidity: [65, 75] },
+        { id: 5, name: 'Kacang Hijau', ph: [5.8, 7.0], temp: [25, 30], humidity: [50, 80] },
+        { id: 6, name: 'Ubi Kayu', ph: [4.5, 8.0], temp: [24, 30], humidity: [60, 70] },
+        { id: 7, name: 'Ubi Jalar', ph: [5.5, 8.0], temp: [21, 27], humidity: [85, 90] }
+    ];
+
+    // Populate Plant Table
+    const plantTableBody = document.getElementById('plant-table-body');
+    plantData.forEach(plant => {
+        const row = document.createElement('tr');
+        row.className = 'border-b';
+        row.innerHTML = `
+            <td class="p-3">${plant.id}</td>
+            <td class="p-3 font-medium">${plant.name}</td>
+            <td class="p-3">${plant.ph[0]} - ${plant.ph[1]}</td>
+            <td class="p-3">${plant.temp[0]} - ${plant.temp[1]}</td>
+            <td class="p-3">${plant.humidity[0]} - ${plant.humidity[1]}</td>
+        `;
+        plantTableBody.appendChild(row);
+    });
+
+    // Fuzzy Logic Simulator
+    const phSlider = document.getElementById('ph-slider');
+    const tempSlider = document.getElementById('temp-slider');
+    const humiditySlider = document.getElementById('humidity-slider');
+
+    const phValue = document.getElementById('ph-value');
+    const tempValue = document.getElementById('temp-value');
+    const humidityValue = document.getElementById('humidity-value');
+    
+    const activeRulesEl = document.getElementById('active-rules');
+    const recommendationOutputEl = document.getElementById('recommendation-output');
+    const confidenceOutputEl = document.getElementById('confidence-output');
+
+    // Chart.js instances
+    let phChart, tempChart, humidityChart, outputChart;
+    
+    const chartColors = {
+        line: '#6B7A40',
+        point: '#4A552A',
+        area: 'rgba(74, 85, 42, 0.2)',
+        grid: 'rgba(200, 200, 200, 0.2)',
+        text: '#374151'
+    };
+
+    function createMembershipChart(ctx, label, xData, yData, inputValue, title) {
+        return new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: xData,
+                datasets: yData.map(d => ({ ...d, borderColor: chartColors.line, borderWidth: 2, pointRadius: 0, tension: 0.1 }))
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: { display: true, text: title, color: chartColors.text },
+                    legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } },
+                    tooltip: { enabled: false },
+                    annotation: { // Ensure annotation plugin is defined here
+                        annotations: {
+                            line1: {
+                                type: 'line',
+                                xMin: inputValue,
+                                xMax: inputValue,
+                                borderColor: 'red',
+                                borderWidth: 2,
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { 
+                        grid: { color: chartColors.grid },
+                        ticks: { color: chartColors.text }
+                    },
+                    y: { 
+                        min: 0, max: 1.1, 
+                        grid: { color: chartColors.grid },
+                        ticks: { color: chartColors.text }
+                    }
+                },
+                animation: { duration: 0 }
+            }
+        });
+    }
+    
+    function createOutputChart(ctx, labels, data, centroid) {
+        return new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Tingkat Kesesuaian',
+                    data: data,
+                    backgroundColor: chartColors.area,
+                    borderColor: chartColors.line,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: { display: false },
+                    legend: { display: false },
+                    tooltip: { enabled: true }
+                },
+                scales: {
+                     x: { 
+                        grid: { display: false },
+                        ticks: { color: chartColors.text, font: { size: 10 } }
+                    },
+                    y: { 
+                        min: 0, max: 1, 
+                        grid: { color: chartColors.grid },
+                        ticks: { color: chartColors.text }
+                    }
+                },
+                 animation: { duration: 500 }
+            }
+        });
+    }
+
+    // Fuzzy logic definitions
+    const fuzzyDefs = {
+        ph: {
+            asam: (x) => Math.max(0, 1 - Math.abs(x - 4.5) / 1.5),
+            netral: (x) => Math.max(0, 1 - Math.abs(x - 6.5) / 1.5),
+            basa: (x) => Math.max(0, 1 - Math.abs(x - 8.5) / 1.5),
+        },
+        temp: {
+            dingin: (x) => Math.max(0, 1 - Math.abs(x - 22) / 5),
+            normal: (x) => Math.max(0, 1 - Math.abs(x - 27) / 5),
+            panas: (x) => Math.max(0, 1 - Math.abs(x - 32) / 5),
+        },
+        humidity: {
+            rendah: (x) => Math.max(0, 1 - Math.abs(x - 40) / 20),
+            sedang: (x) => Math.max(0, 1 - Math.abs(x - 70) / 20),
+            tinggi: (x) => Math.max(0, 1 - Math.abs(x - 90) / 10),
+        }
+    };
+    
+    // Simplified rule engine for demonstration
+    const rules = [
+        { conditions: { ph: 'netral', temp: 'normal', humidity: 'sedang' }, output: 'Padi' },
+        { conditions: { ph: 'netral', temp: 'normal', humidity: 'sedang' }, output: 'Jagung' },
+        { conditions: { ph: 'netral', temp: 'dingin', humidity: 'sedang' }, output: 'Kedelai' },
+        { conditions: { ph: 'asam', temp: 'normal', humidity: 'sedang' }, output: 'Kacang Tanah' },
+        { conditions: { ph: 'netral', temp: 'normal', humidity: 'rendah' }, output: 'Kacang Hijau' },
+        { conditions: { ph: 'asam', temp: 'normal', humidity: 'sedang' }, output: 'Ubi Kayu' },
+        { conditions: { ph: 'netral', temp: 'dingin', humidity: 'tinggi' }, output: 'Ubi Jalar' },
+    ];
+
+    function updateSimulator() {
+        const ph = parseFloat(phSlider.value);
+        const temp = parseInt(tempSlider.value);
+        const humidity = parseInt(humiditySlider.value);
+
+        phValue.textContent = ph.toFixed(1);
+        tempValue.textContent = temp;
+        humidityValue.textContent = humidity;
+
+        // Fuzzify
+        const fuzzyInputs = {
+            ph: {
+                asam: fuzzyDefs.ph.asam(ph),
+                netral: fuzzyDefs.ph.netral(ph),
+                basa: fuzzyDefs.ph.basa(ph)
+            },
+            temp: {
+                dingin: fuzzyDefs.temp.dingin(temp),
+                normal: fuzzyDefs.temp.normal(temp),
+                panas: fuzzyDefs.temp.panas(temp)
+            },
+            humidity: {
+                rendah: fuzzyDefs.humidity.rendah(humidity),
+                sedang: fuzzyDefs.humidity.sedang(humidity),
+                tinggi: fuzzyDefs.humidity.tinggi(humidity)
+            }
+        };
+
+        // Evaluate rules
+        let activeRulesHTML = '';
+        const plantScores = {};
+        plantData.forEach(p => plantScores[p.name] = 0);
+        
+        rules.forEach(rule => {
+            const phStrength = fuzzyInputs.ph[rule.conditions.ph];
+            const tempStrength = fuzzyInputs.temp[rule.conditions.temp];
+            const humidityStrength = fuzzyInputs.humidity[rule.conditions.humidity];
+            
+            const strength = Math.min(phStrength, tempStrength, humidityStrength);
+
+            if (strength > 0) {
+                 activeRulesHTML += `<p>IF pH is ${rule.conditions.ph} AND Temp is ${rule.conditions.temp} AND Humidity is ${rule.conditions.humidity} THEN ${rule.output} (Strength: ${strength.toFixed(2)})</p>`;
+                 plantScores[rule.output] = Math.max(plantScores[rule.output], strength); // Aggregation with MAX
+            }
+        });
+
+        activeRulesEl.innerHTML = activeRulesHTML || '<p>Tidak ada aturan yang cocok.</p>';
+
+        // Defuzzify (Find best plant)
+        let bestPlant = 'Tidak ada';
+        let maxScore = 0;
+        for (const plant in plantScores) {
+            if (plantScores[plant] > maxScore) {
+                maxScore = plantScores[plant];
+                bestPlant = plant;
+            }
+        }
+        
+        recommendationOutputEl.textContent = bestPlant;
+        confidenceOutputEl.textContent = `${(maxScore * 100).toFixed(0)}%`;
+
+        // Update Charts
+        updateCharts(ph, temp, humidity, fuzzyInputs, plantScores);
+    }
+    
+    function updateCharts(ph, temp, humidity, fuzzyInputs, plantScores) {
+        // Update input charts with current value line
+        [phChart, tempChart, humidityChart].forEach(chart => {
+            let value;
+            if (chart.canvas.id === 'phChart') value = ph;
+            else if (chart.canvas.id === 'tempChart') value = temp;
+            else value = humidity;
+            
+            // Check if annotation plugin is correctly registered and its options exist
+            if (chart.options.plugins.annotation && chart.options.plugins.annotation.annotations && chart.options.plugins.annotation.annotations.line1) {
+                chart.options.plugins.annotation.annotations.line1.xMin = value;
+                chart.options.plugins.annotation.annotations.line1.xMax = value;
+            }
+            
+            chart.data.datasets.forEach((dataset, i) => {
+                const term = dataset.label.toLowerCase();
+                let parent;
+                if (chart.canvas.id === 'phChart') parent = 'ph';
+                else if (chart.canvas.id === 'tempChart') parent = 'temp';
+                else parent = 'humidity';
+
+                if (fuzzyInputs[parent][term] > 0) {
+                    dataset.borderColor = 'red';
+                    dataset.borderWidth = 3;
+                } else {
+                    dataset.borderColor = chartColors.line;
+                    dataset.borderWidth = 2;
+                }
+            });
+            chart.update('none');
+        });
+        
+        // Update output chart
+        if (outputChart) {
+            outputChart.data.labels = Object.keys(plantScores);
+            outputChart.data.datasets[0].data = Object.values(plantScores);
+            outputChart.update();
+        }
+    }
+
+
+    function initializeSimulator() {
+        const x_ph = Array.from({length: 141}, (_, i) => i * 0.1);
+        phChart = createMembershipChart(
+            document.getElementById('phChart').getContext('2d'),
+            'pH',
+            x_ph,
+            [
+                { label: 'Asam', data: x_ph.map(fuzzyDefs.ph.asam) },
+                { label: 'Netral', data: x_ph.map(fuzzyDefs.ph.netral) },
+                { label: 'Basa', data: x_ph.map(fuzzyDefs.ph.basa) },
+            ],
+            phSlider.value,
+            'pH Tanah'
+        );
+
+        const x_temp = Array.from({length: 31}, (_, i) => i + 10);
+        tempChart = createMembershipChart(
+            document.getElementById('tempChart').getContext('2d'),
+            'Suhu',
+            x_temp,
+            [
+                { label: 'Dingin', data: x_temp.map(fuzzyDefs.temp.dingin) },
+                { label: 'Normal', data: x_temp.map(fuzzyDefs.temp.normal) },
+                { label: 'Panas', data: x_temp.map(fuzzyDefs.temp.panas) },
+            ],
+            tempSlider.value,
+            'Suhu'
+        );
+        
+        const x_humidity = Array.from({length: 101}, (_, i) => i);
+        humidityChart = createMembershipChart(
+            document.getElementById('humidityChart').getContext('2d'),
+            'Kelembaban',
+            x_humidity,
+            [
+                { label: 'Rendah', data: x_humidity.map(fuzzyDefs.humidity.rendah) },
+                { label: 'Sedang', data: x_humidity.map(fuzzyDefs.humidity.sedang) },
+                { label: 'Tinggi', data: x_humidity.map(fuzzyDefs.humidity.tinggi) },
+            ],
+            humiditySlider.value,
+            'Kelembaban'
+        );
+        
+        outputChart = createOutputChart(
+            document.getElementById('outputChart').getContext('2d'),
+            plantData.map(p => p.name),
+            plantData.map(() => 0),
+            0
+        );
+        
+        updateSimulator();
+    }
+
+    phSlider.addEventListener('input', updateSimulator);
+    tempSlider.addEventListener('input', updateSimulator);
+    humiditySlider.addEventListener('input', updateSimulator);
+
+    // Set initial view
+    document.querySelector('#ringkasan').classList.remove('hidden');
+    
+    // Only initialize simulator when its section is viewed
+    new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                if(!phChart) { // check if not already initialized
+                    initializeSimulator();
+                }
+                observer.unobserve(entry.target); // Stop observing after init
+            }
+        });
+    }, {threshold: 0.1}).observe(document.querySelector('#simulator'));
+});
+</script>
+
+</body>
+</html>
