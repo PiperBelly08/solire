@@ -296,53 +296,53 @@
         return `${day}-${month}-${year} ${hours}:${minutes}`;
     }
 
-    const client = mqtt.connect(
-        "wss://piperbelly008:5wtOnOVrFYnyBP7T@piperbelly008.cloud.shiftr.io",
-        {
-          clientId: "SolireWeb",
-        }
-    );
+<!--    const client = mqtt.connect(-->
+<!--        "wss://piperbelly008:5wtOnOVrFYnyBP7T@piperbelly008.cloud.shiftr.io",-->
+<!--        {-->
+<!--          clientId: "SolireWeb",-->
+<!--        }-->
+<!--    );-->
 
-    client.on("connect", function () {
-        console.log("connected!");
-        client.subscribe("Sensors");
-    });
+<!--    client.on("connect", function () {-->
+<!--        console.log("connected!");-->
+<!--        client.subscribe("Sensors");-->
+<!--    });-->
 
-    const intervalId = setInterval(() => {
-        fetchData('{% url 'solire_app:list_data' %}')
-            .then(response => {
-                console.log(response);
-                if (Array.isArray(response.data)) {
-                    table.clear();
-                    response.data.forEach(item => {
-                        table.row.add([
-                            item.id,
-                            item.ph_value,
-                            item.moisture_value,
-                            item.temperature_value,
-                            formatTimestamp(item.timestamps),
-                        ]).draw();
-                    });
-                } else {
-                    console.error('Data is not an array:', response.data);
-                }
-            })
-            .catch(error => {
-                console.error('Fetch error:', error);
-            });
-    }, 1000 * 1);
+<!--    const intervalId = setInterval(() => {-->
+<!--        fetchData('{% url 'solire_app:list_data' %}')-->
+<!--            .then(response => {-->
+<!--                console.log(response);-->
+<!--                if (Array.isArray(response.data)) {-->
+<!--                    table.clear();-->
+<!--                    response.data.forEach(item => {-->
+<!--                        table.row.add([-->
+<!--                            item.id,-->
+<!--                            item.ph_value,-->
+<!--                            item.moisture_value,-->
+<!--                            item.temperature_value,-->
+<!--                            formatTimestamp(item.timestamps),-->
+<!--                        ]).draw();-->
+<!--                    });-->
+<!--                } else {-->
+<!--                    console.error('Data is not an array:', response.data);-->
+<!--                }-->
+<!--            })-->
+<!--            .catch(error => {-->
+<!--                console.error('Fetch error:', error);-->
+<!--            });-->
+<!--    }, 1000 * 1);-->
 
-    client.on("message", function (topic, message) {
-        message = message.toString().replace(/\\/g, "");
-        console.log(JSON.parse(message));
+<!--    client.on("message", function (topic, message) {-->
+<!--        message = message.toString().replace(/\\/g, "");-->
+<!--        console.log(JSON.parse(message));-->
 
-        const data = JSON.parse(message);
-        document.querySelector("span#realtime_ph").textContent = Number(data.ph_value);
-        document.querySelector("span#realtime_moisture").textContent = Number(data.moisture_percent);
-        document.querySelector("span#realtime_temperature").textContent = Number(data.temperature_c);
+<!--        const data = JSON.parse(message);-->
+<!--        document.querySelector("span#realtime_ph").textContent = Number(data.ph_value);-->
+<!--        document.querySelector("span#realtime_moisture").textContent = Number(data.moisture_percent);-->
+<!--        document.querySelector("span#realtime_temperature").textContent = Number(data.temperature_c);-->
 
-        insertData("{% url 'solire_app:insert_data' %}", JSON.stringify(data));
-    });
+<!--        insertData("{% url 'solire_app:insert_data' %}", JSON.stringify(data));-->
+<!--    });-->
 
     // Get CSRF token from meta tag
     function getCSRFToken() {
