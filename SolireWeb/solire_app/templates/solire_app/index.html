@@ -188,9 +188,6 @@
                                 <div>
                                     <h6 class="card-title mb-2 text-white-50">PH</h6>
                                     <p class="stat-number"><span id="realtime_ph">0</span></p>
-{#                                    <small class="text-white-50">#}
-{#                                        <i class="bi bi-arrow-up"></i> +8% from last month#}
-{#                                    </small>#}
                                 </div>
                             </div>
                         </div>
@@ -203,9 +200,6 @@
                                 <div>
                                     <h6 class="card-title mb-2 text-white-50">Moisture</h6>
                                     <p class="stat-number"><span id="realtime_moisture">0</span></p>
-{#                                    <small class="text-white-50">#}
-{#                                        <i class="bi bi-arrow-down"></i> -3% from last month#}
-{#                                    </small>#}
                                 </div>
                                 <i class="bi bi-percent fs-1 opacity-50"></i>
                             </div>
@@ -219,9 +213,6 @@
                                 <div>
                                     <h6 class="card-title mb-2 text-white-50">Temperature</h6>
                                     <p class="stat-number"><span id="realtime_temperature">0</span>°</p>
-{#                                    <small class="text-white-50">#}
-{#                                        <i class="bi bi-arrow-up"></i> +1.2% from last month#}
-{#                                    </small>#}
                                 </div>
                                 <i class="bi bi-thermometer fs-1 opacity-50"></i>
                             </div>
@@ -273,12 +264,6 @@
                         </div>
                         <div class="card-body">
                             <div class="d-grid gap-2">
-{#                                <button class="btn btn-outline-primary">#}
-{#                                    <i class="bi bi-plus-circle me-2"></i>Add Product#}
-{#                                </button>#}
-{#                                <button class="btn btn-outline-success">#}
-{#                                    <i class="bi bi-person-plus me-2"></i>Add User#}
-{#                                </button>#}
                                 <button class="btn btn-outline-info">
                                     <i class="bi bi-file-earmark-text me-2"></i>Generate Report
                                 </button>
@@ -345,7 +330,7 @@
             .catch(error => {
                 console.error('Fetch error:', error);
             });
-    }, 1000 * 60);
+    }, 1000 * 1);
 
     client.on("message", function (topic, message) {
         message = message.toString().replace(/\\/g, "");
@@ -357,10 +342,6 @@
         document.querySelector("span#realtime_temperature").textContent = Number(data.temperature_c);
 
         insertData("{% url 'solire_app:insert_data' %}", JSON.stringify(data));
-    });
-
-    document.querySelector("button#hello").addEventListener("click", function () {
-        client.publish("Sensors", "Hello from SolireWeb!");
     });
 
     // Get CSRF token from meta tag
