@@ -51,7 +51,7 @@ def list_data(request):
         soil_conditions = SoilCondition.objects.all().order_by('-timestamps')
         return JsonResponse({
             'success': True,
-            'data': list(reversed(list(soil_conditions.values())))
+            'data': list(soil_conditions.values())
         }, status=200)
     except Exception as e:
         return JsonResponse({
