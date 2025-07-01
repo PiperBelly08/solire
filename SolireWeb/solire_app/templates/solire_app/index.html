@@ -307,38 +307,52 @@
                 </button>
             </div>
 
-            <section id="simulator" class="my-16 p-8 bg-white rounded-xl shadow-lg border border-stone-200 scroll-mt-24">
-                <h2 class="text-3xl font-bold mb-2 text-center">Simulator Logika Fuzzy Mamdani</h2>
-                <p class="text-center text-slate-500 mb-8 max-w-2xl mx-auto">Gunakan slider di bawah ini untuk mensimulasikan kondisi tanah yang berbeda. Simulator ini akan menerapkan aturan logika fuzzy (berdasarkan Tabel 2.2 dari tesis Anda) untuk merekomendasikan tanaman yang paling sesuai.</p>
-
-                <div class="grid md:grid-cols-2 gap-8 items-center">
-                    <div class="space-y-6">
-                        <div>
-                            <label for="ph-slider" class="flex justify-between font-medium"><span>pH Tanah</span> <span id="ph-value" class="text-emerald-600 font-bold">7.0</span></label>
-                            <input id="ph-slider" type="range" min="4" max="9" value="7" step="0.1" class="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer">
+            <!-- Database -->
+            <div class="row">
+                <div class="col-lg-8 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-white">
+                            <h5 class="card-title mb-0">Fuzzy Logic Simulator</h5>
                         </div>
-                        <div>
-                            <label for="temp-slider" class="flex justify-between font-medium"><span>Suhu (°C)</span> <span id="temp-value" class="text-emerald-600 font-bold">27</span></label>
-                            <input id="temp-slider" type="range" min="15" max="35" value="27" class="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer">
+                        <div class="card-body p-0 my-3">
+                            <div class="row px-3 py-1">
+                                <div class="col-md-12 mb-4">
+                                    <label for="ph-slider" class="form-label d-flex justify-content-between"><span class="bg-light p-1 rounded-1">pH</span> <span id="ph-value" class="bg-light rounded-1 p-1"></span></label>
+                                    <input id="ph-slider" type="range" min="0" max="14" value="0" step="0.1" class="form-range">
+                                </div>
+                                <div class="col-md-12 mb-4">
+                                    <label for="temp-slider" class="form-label d-flex justify-content-between"><span class="bg-light p-1 rounded-1">Temperature (°C)</span> <span id="temp-value" class="bg-light rounded-1 p-1"></span></label>
+                                    <input id="temp-slider" type="range" min="20" max="40" value="20" class="form-range">
+                                </div>
+                                <div class="col-md-12 mb-4">
+                                    <label for="humidity-slider" class="form-label d-flex justify-content-between"><span class="bg-light p-1 rounded-1">Moisture (%)</span> <span id="humidity-value" class="bg-light rounded-1 p-1"></span></label>
+                                    <input id="humidity-slider" type="range" min="0" max="100" value="0" class="form-range">
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label for="humidity-slider" class="flex justify-between font-medium"><span>Kelembaban (%)</span> <span id="humidity-value" class="text-emerald-600 font-bold">75</span></label>
-                            <input id="humidity-slider" type="range" min="40" max="100" value="75" class="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer">
-                        </div>
-                    </div>
-
-                    <div id="recommendation-card" class="text-center p-8 rounded-lg bg-emerald-50 border-2 border-dashed border-emerald-300 transition-all duration-300">
-                        <h3 class="text-lg font-medium text-slate-600 mb-2">Rekomendasi Tanaman:</h3>
-                        <p id="recommendation-output" class="text-4xl font-bold text-emerald-600 mb-2">Padi</p>
-                        <p class="text-sm text-slate-500">Tingkat Kesesuaian:</p>
-                        <div class="w-full bg-stone-200 rounded-full h-2.5 mt-1">
-                          <div id="confidence-bar" class="bg-emerald-500 h-2.5 rounded-full" style="width: 85%"></div>
-                        </div>
-                         <p id="confidence-text" class="text-sm font-bold text-emerald-500 mt-1">85%</p>
                     </div>
                 </div>
-            </section>
 
+                <div class="col-lg-4 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-white">
+                            <h5 class="card-title mb-0">Recommended Plant</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="recommendation-card" class="text-center rounded-lg bg-emerald-50 border-2 border-dashed border-emerald-300 transition-all duration-300">
+                                <h4 id="recommendation-output" class="mt-3 mb-4">N/A</h4>
+                                <div class="mt-4">
+                                    <p class="mb-1 text-sm text-slate-500">Confidence:</p>
+                                    <p id="confidence-text" class="text-sm font-bold text-emerald-500">0%</p>
+                                    <div class="w-full bg-stone-200 rounded-full h-2.5 mt-1">
+                                      <div id="confidence-bar" class="bg-emerald-500 h-2.5 rounded-full" style="width: 85%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
         </div>
     </div>
@@ -367,7 +381,7 @@
             "Kacang Hijau":{ pH: [6.2, 7.2], temp: [25, 27], humidity: [50, 60] },
             "Ubi Kayu":    { pH: [4.5, 6.5], temp: [25, 29], humidity: [60, 70] },
             "Ubi Jalar":   { pH: [5.5, 6.5], temp: [21, 27], humidity: [50, 60] },
-            "Tidak Ada yang Cocok": { pH: [0,0], temp: [0,0], humidity: [0,0] }
+            "N/A": { pH: [0,0], temp: [0,0], humidity: [0,0] }
         },
         membershipFunctions: {
             ph: {
@@ -426,11 +440,11 @@
         tempValue.textContent = temp;
         humidityValue.textContent = humidity;
 
-        let bestPlant = "Tidak Ada yang Cocok";
+        let bestPlant = "N/A";
         let maxSuitability = 0;
 
         for (const plant in fuzzyData.plants) {
-            if (plant === "Tidak Ada yang Cocok") continue;
+            if (plant === "N/A") continue;
 
             const suitability = calculateSuitability(plant, {ph, temp, humidity});
             if (suitability > maxSuitability) {
@@ -440,7 +454,7 @@
         }
 
         if (maxSuitability < 0.3) {
-           bestPlant = "Tidak Ada yang Cocok";
+           bestPlant = "N/A";
         }
 
 
@@ -458,6 +472,8 @@
     </script>
 
     <script>
+    let data = [];
+
     const DatabaseTable = new DataTable('#soilConditionsTable', {
         responsive: true,
     });
