@@ -136,15 +136,28 @@
 
             <!-- Stats Cards -->
             <div class="row mb-4">
-                <div class="col-12 mb-4">
+                <div class="col-md-6 mb-4">
                     <div class="card stats-card h-100 w-100">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6 class="card-title mb-2 text-white-50">Recommended Plant(s)</h6>
-                                    <p class="stat-number">[]</p>
+                                    <p class="stat-number">N/A</p>
                                 </div>
                                 <i class="bi bi-flower3 fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="card stats-card h-100 w-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-title mb-2 text-white-50">Percentages</h6>
+                                    <p class="stat-number">0</p>
+                                </div>
+                                <i class="bi bi-percent fs-1 opacity-50"></i>
                             </div>
                         </div>
                     </div>
@@ -189,16 +202,77 @@
                 </div>
             </div>
 
-            <!-- Recent Activities -->
+            <!-- Live Feed -->
             <div class="row">
                 <div class="col-lg-8 mb-4">
                     <div class="card">
                         <div class="card-header bg-white">
-                            <h5 class="card-title mb-0">Recent Orders</h5>
+                            <h5 class="card-title mb-0">Live Feed</h5>
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table class="table mb-0">
+                                <table class="table mb-0" id="liveFeedTable">
+                                    <thead>
+                                        <tr>
+                                            <th>PH</th>
+                                            <th>Moisture</th>
+                                            <th>Temperature</th>
+                                            <th>Timestamps</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+<!--                                        {% for sc in soil_conditions %}-->
+<!--                                            <tr>-->
+<!--                                                <td>{{ forloop.counter }}</td>-->
+<!--                                                <td>{{ sc.ph_value }}</td>-->
+<!--                                                <td>{{ sc.moisture_value }}</td>-->
+<!--                                                <td>{{ sc.temperature_value }}</td>-->
+<!--                                                <td>{{ sc.timestamps }}</td>-->
+<!--                                            </tr>-->
+<!--                                        {% endfor %}-->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-white">
+                            <h5 class="card-title mb-0">Quick Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-info">
+                                    <i class="bi bi-file-earmark-text me-2"></i>Generate Report
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <!-- Page Title -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Database</h1>
+                <button class="btn btn-primary invisible">
+                    <i class="bi bi-plus-circle me-2"></i>Add New
+                </button>
+            </div>
+
+            <!-- Database -->
+            <div class="row">
+                <div class="col-lg-8 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-white">
+                            <h5 class="card-title mb-0">Database</h5>
+                        </div>
+                        <div class="card-body p-0 my-3">
+                            <div class="table-responsive">
+                                <table class="table mb-0" id="soilConditionsTable">
                                     <thead>
                                         <tr>
                                             <th>#</th>
@@ -209,15 +283,6 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for sc in soil_conditions %}
-                                            <tr>
-                                                <td>{{ forloop.counter }}</td>
-                                                <td>{{ sc.ph_value }}</td>
-                                                <td>{{ sc.moisture_value }}</td>
-                                                <td>{{ sc.temperature_value }}</td>
-                                                <td>{{ sc.timestamps }}</td>
-                                            </tr>
-                                        {% endfor %}
                                     </tbody>
                                 </table>
                             </div>
@@ -245,8 +310,29 @@
 
     <script defer src="{% static 'solire_app/js/sidebar.js' %}"></script>
     <script>
-    let table = new DataTable('.table', {
+    const DatabaseTable = new DataTable('#soilConditionsTable', {
         responsive: true,
+    });
+
+    const LiveFeedTable = new DataTable('#liveFeedTable', {
+        responsive: true,
+        searching: false,
+        paging: false,
+        info: false, // Hide "Showing X of Y entries" for live feed
+        data: data, // Pass the data directly
+        columns: [
+            { data: 'ph_value' },
+            { data: 'moisture_value' },
+            { data: 'temperature_value' },
+            {
+                data: 'timestamps',
+                render: function(data, type, row) {
+                    return formatTimestamp(data);
+                }
+            }
+        ],
+        // Order by timestamps, descending, as backend sends newest-first.
+        order: [[3, 'desc']] // index 3 for timestamps
     });
 
     function formatTimestamp(timestamp) {
@@ -257,8 +343,9 @@
         const year = date.getFullYear();
         const hours = String(date.getHours()).padStart(2, '0');
         const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
 
-        return `${day}-${month}-${year} ${hours}:${minutes}`;
+        return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
     }
 
 <!--    const client = mqtt.connect(-->
