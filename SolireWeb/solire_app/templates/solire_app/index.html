@@ -9,39 +9,159 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token }}">
 
-    <!-- CSS Reset -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css">
 
-    {#  HTMX  #}
-<!--    <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>-->
-
-    {#  Bootstrap  #}
+    {# Bootstrap #}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4Q6Gf2aSP4eDXB8Miphtr37CMZZQ5oXLH2yaXMJ2w8e2ZtHTl7GptT4jmndRuHDT" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js" integrity="sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO" crossorigin="anonymous" defer></script>
 
-    {#  CSS  #}
+    {# Custom CSS #}
     <link rel="stylesheet" href="{% static 'solire_app/style.css' %}">
 
-    {#  Icons  #}
+    {# Icons #}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
 
-    {#  jQuery  #}
+    {# jQuery #}
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 
-    {#  DataTables  #}
+    {# DataTables #}
     <link href="https://cdn.datatables.net/v/bs5/jq-3.7.0/jszip-3.10.1/dt-2.3.0/b-3.2.3/b-colvis-3.2.3/b-html5-3.2.3/b-print-3.2.3/cr-2.1.0/fh-4.0.1/r-3.0.4/sp-2.3.3/datatables.min.css" rel="stylesheet" integrity="sha384-uUny8v9vS7zUmrN8wyjZ51nK0Zj865io7DkkcwejIQYRPkWT0k42ulr2Qa/MqVlN" crossorigin="anonymous">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js" integrity="sha384-VFQrHzqBh5qiJIU0uGU5CIW3+OWpdGGJM9LBnGbuIH2mkICcFZ7lPd/AAtI7SNf7" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js" integrity="sha384-/RlQG9uf0M2vcTw3CX7fbqgbj/h8wKxw7C3zu9/GxcBPRKOEcESxaxufwRXqzq6n" crossorigin="anonymous"></script>
     <script src="https://cdn.datatables.net/v/bs5/jq-3.7.0/jszip-3.10.1/dt-2.3.0/b-3.2.3/b-colvis-3.2.3/b-html5-3.2.3/b-print-3.2.3/cr-2.1.0/fh-4.0.1/r-3.0.4/sp-2.3.3/datatables.min.js" integrity="sha384-mHQpk6uc59YtrJgGnk80iRWjB9d8EGpFasFvDLoxTxqEmcnHlCz5zsxkLX3o0vCV" crossorigin="anonymous"></script>
 
-    {#  MQTT  #}
+    {# MQTT #}
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
-    {#  Chart.js  #}
+    {# Chart.js #}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
+    <script>
+        // Register Chart.js Annotation Plugin immediately after its loading
+        Chart.register(ChartjsPluginAnnotation);
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif; /* Apply Inter font globally */
+        }
+        /* Styles from interactive-analysis.html adapted for the simulator section */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 250px;
+            max-height: 250px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 300px;
+                max-height: 300px;
+            }
+        }
+        /* Replaced Tailwind classes with custom styles for simulator components */
+        .simulator-card { /* Replaces .card .rounded-lg .p-6 .space-y-6 etc. */
+            background-color: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            border-radius: 0.5rem; /* rounded-lg */
+            padding: 1.5rem; /* p-6 */
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .simulator-input-group label { /* Replaces block, font-medium, text-gray-700 */
+            display: block;
+            font-weight: 500;
+            color: #4B5563; /* text-gray-700 */
+        }
+        .simulator-input-group input[type="range"] { /* Replaces w-full, h-2, bg-gray-200, rounded-lg, appearance-none, cursor-pointer, slider-track */
+            width: 100%;
+            height: 0.5rem;
+            background-color: #E5E7EB; /* bg-gray-200 */
+            border-radius: 0.5rem; /* rounded-lg (approx) */
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
+        }
+        .simulator-input-group input[type="range"]::-webkit-slider-thumb { /* Custom thumb style */
+            -webkit-appearance: none;
+            appearance: none;
+            width: 1rem;
+            height: 1rem;
+            background: #4A552A; /* Match Chart.js line color */
+            border-radius: 50%;
+            cursor: grab;
+            margin-top: -0.25rem; /* Adjust to center thumb on track */
+        }
+        .simulator-input-group input[type="range"]::-moz-range-thumb { /* Custom thumb style for Firefox */
+            width: 1rem;
+            height: 1rem;
+            background: #4A552A;
+            border-radius: 50%;
+            cursor: grab;
+        }
+        .simulator-text-value { /* For spans displaying slider values */
+            font-weight: 700;
+            color: #4A552A;
+        }
+        .active-rules-box { /* Replaces mt-2, text-sm, space-y-1, h-24, overflow-y-auto, bg-gray-50, p-2, rounded */
+            margin-top: 0.5rem;
+            font-size: 0.875rem; /* text-sm */
+            line-height: 1.25rem; /* space-y-1 equivalent */
+            height: 6rem; /* h-24 (96px = 6rem) */
+            overflow-y: auto;
+            background-color: #F9FAFB; /* bg-gray-50 */
+            padding: 0.5rem; /* p-2 */
+            border-radius: 0.25rem; /* rounded */
+            color: #4B5563; /* Default text color */
+        }
+        .recommendation-box { /* Replaces text-center, bg-[#F0F2E6], p-8, rounded-lg */
+            text-align: center;
+            background-color: #F0F2E6;
+            padding: 2rem; /* p-8 */
+            border-radius: 0.5rem; /* rounded-lg */
+        }
+        .recommendation-output-text { /* Replaces text-4xl, font-bold, text-[#4A552A] */
+            font-size: 2.25rem; /* text-4xl */
+            line-height: 2.5rem;
+            font-weight: 700;
+            color: #4A552A;
+        }
+        .confidence-output-text { /* Replaces text-3xl, font-bold, text-green-600 */
+            font-size: 1.875rem; /* text-3xl */
+            line-height: 2.25rem;
+            font-weight: 700;
+            color: #22C55E; /* text-green-600 */
+        }
+        /* Ensure the grid gap is consistent */
+        .grid {
+            display: grid;
+            gap: 1.5rem; /* Equivalent to gap-6 or gap-8, adjust as needed */
+        }
+        @media (min-width: 1024px) { /* lg breakpoint */
+            .lg\:grid-cols-3 {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+            .lg\:col-span-1 {
+                grid-column: span 1 / span 1;
+            }
+            .lg\:col-span-2 {
+                grid-column: span 2 / span 2;
+            }
+            .lg\:col-span-3 {
+                grid-column: span 3 / span 3;
+            }
+        }
+        @media (min-width: 768px) { /* md breakpoint */
+            .md\:grid-cols-2 {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+        .mb-4 { margin-bottom: 1rem; } /* Simplified margin-bottom */
+    </style>
 </head>
 <body class="bg-slate-800">
-    <!-- Sidebar -->
     <nav class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <i class="bi bi-speedometer2 text-white fs-4"></i>
@@ -55,13 +175,13 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#database">
+                <a class="nav-link" href="#database-section">
                     <i class="bi bi-database"></i>
                     <span>Database</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#simulator">
+                <a class="nav-link" href="#simulator-section">
                     <i class="bi bi-graph-up"></i>
                     <span>Simulator</span>
                 </a>
@@ -69,12 +189,9 @@
         </ul>
     </nav>
 
-    <!-- Sidebar Overlay for Mobile -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <!-- Main Content -->
     <div class="main-content" id="mainContent">
-        <!-- Top Navigation -->
         <nav class="navbar navbar-expand-lg navbar-light">
             <div class="container-fluid">
                 <button class="toggle-btn" id="toggleSidebar">
@@ -82,7 +199,6 @@
                 </button>
 
                 <div class="d-flex align-items-center gap-3 ms-auto">
-                    <!-- Search -->
                     <div class="d-none d-md-block invisible">
                         <div class="input-group">
                             <input type="text" class="form-control" placeholder="Search...">
@@ -92,7 +208,6 @@
                         </div>
                     </div>
 
-                    <!-- Notifications -->
                     <div class="dropdown invisible">
                         <button class="btn btn-link text-decoration-none position-relative" data-bs-toggle="dropdown">
                             <i class="bi bi-bell fs-5 text-muted"></i>
@@ -106,7 +221,6 @@
                         </ul>
                     </div>
 
-                    <!-- Profile -->
                     <div class="dropdown profile-dropdown invisible">
                         <button class="btn btn-link text-decoration-none d-flex align-items-center gap-2" data-bs-toggle="dropdown">
                             <div class="user-avatar">JD</div>
@@ -124,9 +238,7 @@
             </div>
         </nav>
 
-        <!-- Page Content -->
         <div class="content-wrapper">
-            <!-- Page Title -->
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="h3 mb-0">Dashboard</h1>
                 <button class="btn btn-primary invisible">
@@ -134,7 +246,6 @@
                 </button>
             </div>
 
-            <!-- Stats Cards -->
             <div class="row mb-4">
                 <div class="col-md-6 mb-4">
                     <div class="card stats-card h-100 w-100">
@@ -202,7 +313,6 @@
                 </div>
             </div>
 
-            <!-- Live Feed -->
             <div class="row">
                 <div class="col-lg-8 mb-4">
                     <div class="card">
@@ -246,15 +356,13 @@
 
             <hr>
 
-            <!-- Page Title -->
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0">Database</h1>
+                <h1 class="h3 mb-0" id="database-section">Database</h1>
                 <button class="btn btn-primary invisible">
                     <i class="bi bi-plus-circle me-2"></i>Add New
                 </button>
             </div>
 
-            <!-- Database -->
             <div class="row">
                 <div class="col-lg-8 mb-4">
                     <div class="card">
@@ -299,177 +407,77 @@
 
             <hr>
 
-            <!-- Page Title -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0">Simulator</h1>
-                <button class="btn btn-primary invisible">
-                    <i class="bi bi-plus-circle me-2"></i>Add New
-                </button>
-            </div>
+            <section id="simulator-section" class="page-section mb-16 scroll-mt-20">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="h3 mb-0">Simulator</h1>
+                    <button class="btn btn-primary invisible">
+                        <i class="bi bi-plus-circle me-2"></i>Add New
+                    </button>
+                </div>
+                <p class="text-center text-lg text-secondary max-w-3xl mx-auto mb-4">
+                    This is a tool to understand the "black box" of your Mamdani Fuzzy system. Slide the inputs to change sensor values and see in real-time how the system processes them: from fuzzification, rule evaluation, to generating concrete plant recommendations through defuzzification.
+                </p>
 
-            <!-- Database -->
-            <div class="row">
-                <div class="col-lg-8 mb-4">
-                    <div class="card">
-                        <div class="card-header bg-white">
-                            <h5 class="card-title mb-0">Fuzzy Logic Simulator</h5>
-                        </div>
-                        <div class="card-body p-0 my-3">
-                            <div class="row px-3 py-1">
-                                <div class="col-md-12 mb-4">
-                                    <label for="ph-slider" class="form-label d-flex justify-content-between"><span class="bg-light p-1 rounded-1">pH</span> <span id="ph-value" class="bg-light rounded-1 p-1"></span></label>
-                                    <input id="ph-slider" type="range" min="0" max="14" value="0" step="0.1" class="form-range">
-                                </div>
-                                <div class="col-md-12 mb-4">
-                                    <label for="temp-slider" class="form-label d-flex justify-content-between"><span class="bg-light p-1 rounded-1">Temperature (°C)</span> <span id="temp-value" class="bg-light rounded-1 p-1"></span></label>
-                                    <input id="temp-slider" type="range" min="20" max="40" value="20" class="form-range">
-                                </div>
-                                <div class="col-md-12 mb-4">
-                                    <label for="humidity-slider" class="form-label d-flex justify-content-between"><span class="bg-light p-1 rounded-1">Moisture (%)</span> <span id="humidity-value" class="bg-light rounded-1 p-1"></span></label>
-                                    <input id="humidity-slider" type="range" min="0" max="100" value="0" class="form-range">
-                                </div>
+                <div class="row g-4"> {# Replaced grid lg:grid-cols-3 gap-8 with Bootstrap row and gutter #}
+                    <div class="col-lg-4"> {# Replaced lg:col-span-1 #}
+                        <div class="simulator-card space-y-4"> {# Replaced Tailwind classes #}
+                            <h3 class="h5 font-weight-bold">Sensor Input</h3> {# Replaced text-xl font-bold #}
+                            <div class="simulator-input-group">
+                                <label for="ph-slider" class="simulator-input-group-label">Soil pH: <span id="ph-value" class="simulator-text-value">6.5</span></label>
+                                <input id="ph-slider" type="range" min="0" max="14" value="6.5" step="0.1" class="simulator-input-group-range">
+                            </div>
+                            <div class="simulator-input-group">
+                                <label for="temp-slider" class="simulator-input-group-label">Temperature (°C): <span id="temp-value" class="simulator-text-value">27</span></label>
+                                <input id="temp-slider" type="range" min="10" max="40" value="27" step="1" class="simulator-input-group-range">
+                            </div>
+                            <div class="simulator-input-group">
+                                <label for="humidity-slider" class="simulator-input-group-label">Moisture (%): <span id="humidity-value" class="simulator-text-value">75</span></label>
+                                <input id="humidity-slider" type="range" min="0" max="100" value="75" step="1" class="simulator-input-group-range">
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="col-lg-4 mb-4">
-                    <div class="card">
-                        <div class="card-header bg-white">
-                            <h5 class="card-title mb-0">Recommended Plant</h5>
+                    <div class="col-lg-8"> {# Replaced lg:col-span-2 #}
+                        <div class="simulator-card"> {# Replaced Tailwind classes #}
+                            <h3 class="h5 font-weight-bold mb-4">Membership Function Visualization (Fuzzification)</h3>
+                            <div class="row g-2"> {# Replaced grid md:grid-cols-3 gap-4 with Bootstrap row and gutter #}
+                                <div class="col-md-4"><div class="chart-container"><canvas id="phChart"></canvas></div></div>
+                                <div class="col-md-4"><div class="chart-container"><canvas id="tempChart"></canvas></div></div>
+                                <div class="col-md-4"><div class="chart-container"><canvas id="humidityChart"></canvas></div></div>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <div id="recommendation-card" class="text-center rounded-lg bg-emerald-50 border-2 border-dashed border-emerald-300 transition-all duration-300">
-                                <h4 id="recommendation-output" class="mt-3 mb-4">N/A</h4>
-                                <div class="mt-4">
-                                    <p class="mb-1 text-sm text-slate-500">Confidence:</p>
-                                    <p id="confidence-text" class="text-sm font-bold text-emerald-500">0%</p>
-                                    <div class="w-full bg-stone-200 rounded-full h-2.5 mt-1">
-                                      <div id="confidence-bar" class="bg-emerald-500 h-2.5 rounded-full" style="width: 85%"></div>
+                    </div>
+
+                    <div class="col-lg-12"> {# Replaced lg:col-span-3 #}
+                        <div class="simulator-card"> {# Replaced Tailwind classes #}
+                             <h3 class="h5 font-weight-bold mb-4">Results & Recommendation</h3>
+                             <div class="row g-4 align-items-center"> {# Replaced grid md:grid-cols-2 gap-8 items-center #}
+                                 <div class="col-md-6">
+                                    <h4 class="h6 font-weight-semibold">Active Fuzzy Rules:</h4> {# Replaced text-lg font-semibold #}
+                                    <div id="active-rules" class="active-rules-box"> {# Replaced Tailwind classes #}
+                                        <p>Slide the sliders to see rules...</p>
                                     </div>
-                                </div>
-                            </div>
+                                    <h4 class="h6 font-weight-semibold mt-4">Defuzzification Process (Centroid):</h4>
+                                    <div class="chart-container mt-2"><canvas id="outputChart"></canvas></div>
+                                 </div>
+                                 <div class="col-md-6">
+                                     <div class="recommendation-box"> {# Replaced Tailwind classes #}
+                                        <h4 class="h6 font-weight-semibold mb-2">Plant Recommendation:</h4>
+                                        <p id="recommendation-output" class="recommendation-output-text">N/A</p>
+                                        <p class="text-secondary">with</p> {# Replaced text-gray-600 #}
+                                        <h4 class="h6 font-weight-semibold mt-2 mb-1">Suitability Level:</h4>
+                                        <p id="confidence-output" class="confidence-output-text">0%</p>
+                                     </div>
+                                 </div>
+                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-
+            </section>
         </div>
     </div>
 
     <script defer src="{% static 'solire_app/js/sidebar.js' %}"></script>
-
-    <script>
-    const phSlider = document.getElementById('ph-slider');
-    const tempSlider = document.getElementById('temp-slider');
-    const humiditySlider = document.getElementById('humidity-slider');
-
-    const phValue = document.getElementById('ph-value');
-    const tempValue = document.getElementById('temp-value');
-    const humidityValue = document.getElementById('humidity-value');
-
-    const recommendationOutput = document.getElementById('recommendation-output');
-    const confidenceBar = document.getElementById('confidence-bar');
-    const confidenceText = document.getElementById('confidence-text');
-
-    const fuzzyData = {
-        plants: {
-            "Padi":        { pH: [6.0, 7.0], temp: [24, 29], humidity: [60, 90] },
-            "Jagung":      { pH: [5.5, 6.5], temp: [21, 30], humidity: [60, 80] },
-            "Kedelai":     { pH: [6.0, 7.0], temp: [25, 32], humidity: [65, 75] },
-            "Kacang Tanah":{ pH: [6.0, 6.5], temp: [25, 30], humidity: [65, 75] },
-            "Kacang Hijau":{ pH: [6.2, 7.2], temp: [25, 27], humidity: [50, 60] },
-            "Ubi Kayu":    { pH: [4.5, 6.5], temp: [25, 29], humidity: [60, 70] },
-            "Ubi Jalar":   { pH: [5.5, 6.5], temp: [21, 27], humidity: [50, 60] },
-            "N/A": { pH: [0,0], temp: [0,0], humidity: [0,0] }
-        },
-        membershipFunctions: {
-            ph: {
-                asam:    [4, 4, 5, 6],
-                netral:  [5.5, 6.5, 7.0, 7.5],
-                basa:    [7, 8, 9, 9]
-            },
-            temp: {
-                dingin: [15, 15, 18, 22],
-                normal: [20, 25, 30, 32],
-                panas:  [30, 33, 35, 35]
-            },
-            humidity: {
-                rendah: [40, 40, 50, 60],
-                sedang: [55, 65, 75, 85],
-                tinggi: [80, 90, 100, 100]
-            }
-        }
-    };
-
-    function trapezoid(x, a, b, c, d) {
-        if (x <= a || x >= d) return 0;
-        if (x > a && x < b) return (x - a) / (b - a);
-        if (x >= b && x <= c) return 1;
-        if (x > c && x < d) return (d - x) / (d - c);
-        return 0;
-    }
-
-    function fuzzify(value, type) {
-        const fuzzyValues = {};
-        for (const term in fuzzyData.membershipFunctions[type]) {
-            const params = fuzzyData.membershipFunctions[type][term];
-            fuzzyValues[term] = trapezoid(value, ...params);
-        }
-        return fuzzyValues;
-    }
-
-    function calculateSuitability(plant, fuzzyInputs) {
-        const plantData = fuzzyData.plants[plant];
-
-        const phSuitability = (val) => val >= plantData.pH[0] && val <= plantData.pH[1] ? 1 : 1 - Math.min(Math.abs(val - plantData.pH[0]), Math.abs(val - plantData.pH[1])) / 3;
-        const tempSuitability = (val) => val >= plantData.temp[0] && val <= plantData.temp[1] ? 1 : 1 - Math.min(Math.abs(val - plantData.temp[0]), Math.abs(val - plantData.temp[1])) / 10;
-        const humiditySuitability = (val) => val >= plantData.humidity[0] && val <= plantData.humidity[1] ? 1 : 1 - Math.min(Math.abs(val - plantData.humidity[0]), Math.abs(val - plantData.humidity[1])) / 20;
-
-        const score = (phSuitability(phSlider.value) + tempSuitability(tempSlider.value) + humiditySuitability(humiditySlider.value)) / 3;
-
-        return Math.max(0, score);
-    }
-
-    function updateRecommendation() {
-        const ph = parseFloat(phSlider.value);
-        const temp = parseFloat(tempSlider.value);
-        const humidity = parseFloat(humiditySlider.value);
-
-        phValue.textContent = ph.toFixed(1);
-        tempValue.textContent = temp;
-        humidityValue.textContent = humidity;
-
-        let bestPlant = "N/A";
-        let maxSuitability = 0;
-
-        for (const plant in fuzzyData.plants) {
-            if (plant === "N/A") continue;
-
-            const suitability = calculateSuitability(plant, {ph, temp, humidity});
-            if (suitability > maxSuitability) {
-                maxSuitability = suitability;
-                bestPlant = plant;
-            }
-        }
-
-        if (maxSuitability < 0.3) {
-           bestPlant = "N/A";
-        }
-
-
-        recommendationOutput.textContent = bestPlant;
-        const confidence = Math.round(maxSuitability * 100);
-        confidenceBar.style.width = `${confidence}%`;
-        confidenceText.textContent = `${confidence}%`;
-    }
-
-    phSlider.addEventListener('input', updateRecommendation);
-    tempSlider.addEventListener('input', updateRecommendation);
-    humiditySlider.addEventListener('input', updateRecommendation);
-
-    updateRecommendation();
-    </script>
 
     <script>
     let data = [];
@@ -512,55 +520,7 @@
         return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
     }
 
-<!--    const client = mqtt.connect(-->
-<!--        "wss://piperbelly008:5wtOnOVrFYnyBP7T@piperbelly008.cloud.shiftr.io",-->
-<!--        {-->
-<!--          clientId: "SolireWeb",-->
-<!--        }-->
-<!--    );-->
-
-<!--    client.on("connect", function () {-->
-<!--        console.log("connected!");-->
-<!--        client.subscribe("Sensors");-->
-<!--    });-->
-
-<!--    const intervalId = setInterval(() => {-->
-<!--        fetchData('{% url 'solire_app:list_data' %}')-->
-<!--            .then(response => {-->
-<!--                console.log(response);-->
-<!--                if (Array.isArray(response.data)) {-->
-<!--                    table.clear();-->
-<!--                    response.data.forEach(item => {-->
-<!--                        table.row.add([-->
-<!--                            item.id,-->
-<!--                            item.ph_value,-->
-<!--                            item.moisture_value,-->
-<!--                            item.temperature_value,-->
-<!--                            formatTimestamp(item.timestamps),-->
-<!--                        ]).draw();-->
-<!--                    });-->
-<!--                } else {-->
-<!--                    console.error('Data is not an array:', response.data);-->
-<!--                }-->
-<!--            })-->
-<!--            .catch(error => {-->
-<!--                console.error('Fetch error:', error);-->
-<!--            });-->
-<!--    }, 1000 * 1);-->
-
-<!--    client.on("message", function (topic, message) {-->
-<!--        message = message.toString().replace(/\\/g, "");-->
-<!--        console.log(JSON.parse(message));-->
-
-<!--        const data = JSON.parse(message);-->
-<!--        document.querySelector("span#realtime_ph").textContent = Number(data.ph_value);-->
-<!--        document.querySelector("span#realtime_moisture").textContent = Number(data.moisture_percent);-->
-<!--        document.querySelector("span#realtime_temperature").textContent = Number(data.temperature_c);-->
-
-<!--        insertData("{% url 'solire_app:insert_data' %}", JSON.stringify(data));-->
-<!--    });-->
-
-    // Get CSRF token from meta tag
+// Get CSRF token from meta tag
     function getCSRFToken() {
         return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     }
@@ -601,5 +561,314 @@
             throw error;
         }
     }
+
+    // --- Fuzzy Logic Simulator Scripts (from interactive-analysis.html) ---
+    const phSlider = document.getElementById('ph-slider');
+    const tempSlider = document.getElementById('temp-slider');
+    const humiditySlider = document.getElementById('humidity-slider');
+
+    const phValue = document.getElementById('ph-value');
+    const tempValue = document.getElementById('temp-value');
+    const humidityValue = document.getElementById('humidity-value');
+
+    const activeRulesEl = document.getElementById('active-rules');
+    const recommendationOutputEl = document.getElementById('recommendation-output');
+    const confidenceOutputEl = document.getElementById('confidence-output');
+
+    // Chart.js instances
+    let phChart, tempChart, humidityChart, outputChart;
+
+    const chartColors = {
+        line: '#6B7A40',
+        point: '#4A552A',
+        area: 'rgba(74, 85, 42, 0.2)',
+        grid: 'rgba(200, 200, 200, 0.2)',
+        text: '#374151'
+    };
+
+    function createMembershipChart(ctx, label, xData, yData, inputValue, title) {
+        return new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: xData,
+                datasets: yData.map(d => ({ ...d, borderColor: chartColors.line, borderWidth: 2, pointRadius: 0, tension: 0.1 }))
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: { display: true, text: title, color: chartColors.text },
+                    legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } },
+                    tooltip: { enabled: false },
+                    annotation: {
+                        annotations: {
+                            line1: {
+                                type: 'line',
+                                xMin: inputValue,
+                                xMax: inputValue,
+                                borderColor: 'red',
+                                borderWidth: 2,
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: chartColors.grid },
+                        ticks: { color: chartColors.text }
+                    },
+                    y: {
+                        min: 0, max: 1.1,
+                        grid: { color: chartColors.grid },
+                        ticks: { color: chartColors.text }
+                    }
+                },
+                animation: { duration: 0 }
+            }
+        });
+    }
+
+    function createOutputChart(ctx, labels, data, centroid) {
+        return new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Suitability Level',
+                    data: data,
+                    backgroundColor: chartColors.area,
+                    borderColor: chartColors.line,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: { display: false },
+                    legend: { display: false },
+                    tooltip: { enabled: true }
+                },
+                scales: {
+                     x: {
+                        grid: { display: false },
+                        ticks: { color: chartColors.text, font: { size: 10 } }
+                    },
+                    y: {
+                        min: 0, max: 1,
+                        grid: { color: chartColors.grid },
+                        ticks: { color: chartColors.text }
+                    }
+                },
+                 animation: { duration: 500 }
+            }
+        });
+    }
+
+    // Fuzzy logic definitions
+    const fuzzyDefs = {
+        ph: {
+            asam: (x) => Math.max(0, 1 - Math.abs(x - 4.5) / 1.5),
+            netral: (x) => Math.max(0, 1 - Math.abs(x - 6.5) / 1.5),
+            basa: (x) => Math.max(0, 1 - Math.abs(x - 8.5) / 1.5),
+        },
+        temp: {
+            dingin: (x) => Math.max(0, 1 - Math.abs(x - 22) / 5),
+            normal: (x) => Math.max(0, 1 - Math.abs(x - 27) / 5),
+            panas: (x) => Math.max(0, 1 - Math.abs(x - 32) / 5),
+        },
+        humidity: {
+            rendah: (x) => Math.max(0, 1 - Math.abs(x - 40) / 20),
+            sedang: (x) => Math.max(0, 1 - Math.abs(x - 70) / 20),
+            tinggi: (x) => Math.max(0, 1 - Math.abs(x - 90) / 10),
+        }
+    };
+
+    // Simplified rule engine for demonstration
+    const rules = [
+        { conditions: { ph: 'netral', temp: 'normal', humidity: 'sedang' }, output: 'Padi' },
+        { conditions: { ph: 'netral', temp: 'normal', humidity: 'sedang' }, output: 'Jagung' },
+        { conditions: { ph: 'netral', temp: 'dingin', humidity: 'sedang' }, output: 'Kedelai' },
+        { conditions: { ph: 'asam', temp: 'normal', humidity: 'sedang' }, output: 'Kacang Tanah' },
+        { conditions: { ph: 'netral', temp: 'normal', humidity: 'rendah' }, output: 'Kacang Hijau' },
+        { conditions: { ph: 'asam', temp: 'normal', humidity: 'sedang' }, output: 'Ubi Kayu' },
+        { conditions: { ph: 'netral', temp: 'dingin', humidity: 'tinggi' }, output: 'Ubi Jalar' },
+    ];
+
+    const plantData = [
+        { id: 1, name: 'Padi', ph: [6.0, 7.0], temp: [24, 29], humidity: [60, 90] },
+        { id: 2, name: 'Jagung', ph: [5.5, 7.0], temp: [21, 30], humidity: [60, 80] },
+        { id: 3, name: 'Kedelai', ph: [6.0, 7.0], temp: [20, 25], humidity: [65, 75] },
+        { id: 4, name: 'Kacang Tanah', ph: [5.0, 6.5], temp: [25, 30], humidity: [65, 75] },
+        { id: 5, name: 'Kacang Hijau', ph: [5.8, 7.0], temp: [25, 30], humidity: [50, 80] },
+        { id: 6, name: 'Ubi Kayu', ph: [4.5, 8.0], temp: [24, 30], humidity: [60, 70] },
+        { id: 7, name: 'Ubi Jalar', ph: [5.5, 8.0], temp: [21, 27], humidity: [85, 90] }
+    ];
+
+
+    function updateSimulator() {
+        const ph = parseFloat(phSlider.value);
+        const temp = parseInt(tempSlider.value);
+        const humidity = parseInt(humiditySlider.value);
+
+        phValue.textContent = ph.toFixed(1);
+        tempValue.textContent = temp;
+        humidityValue.textContent = humidity;
+
+        // Fuzzify
+        const fuzzyInputs = {
+            ph: {
+                asam: fuzzyDefs.ph.asam(ph),
+                netral: fuzzyDefs.ph.netral(ph),
+                basa: fuzzyDefs.ph.basa(ph)
+            },
+            temp: {
+                dingin: fuzzyDefs.temp.dingin(temp),
+                normal: fuzzyDefs.temp.normal(temp),
+                panas: fuzzyDefs.temp.panas(temp)
+            },
+            humidity: {
+                rendah: fuzzyDefs.humidity.rendah(humidity),
+                sedang: fuzzyDefs.humidity.sedang(humidity),
+                tinggi: fuzzyDefs.humidity.tinggi(humidity)
+            }
+        };
+
+        // Evaluate rules
+        let activeRulesHTML = '';
+        const plantScores = {};
+        plantData.forEach(p => plantScores[p.name] = 0);
+
+        rules.forEach(rule => {
+            const phStrength = fuzzyInputs.ph[rule.conditions.ph];
+            const tempStrength = fuzzyInputs.temp[rule.conditions.temp];
+            const humidityStrength = fuzzyInputs.humidity[rule.conditions.humidity];
+
+            const strength = Math.min(phStrength, tempStrength, humidityStrength);
+
+            if (strength > 0) {
+                 activeRulesHTML += `<p>IF pH is ${rule.conditions.ph} AND Temp is ${rule.conditions.temp} AND Humidity is ${rule.conditions.humidity} THEN ${rule.output} (Strength: ${strength.toFixed(2)})</p>`;
+                 plantScores[rule.output] = Math.max(plantScores[rule.output], strength); // Aggregation with MAX
+            }
+        });
+
+        activeRulesEl.innerHTML = activeRulesHTML || '<p>No matching rules.</p>';
+
+        // Defuzzify (Find best plant)
+        let bestPlant = 'N/A';
+        let maxScore = 0;
+        for (const plant in plantScores) {
+            if (plantScores[plant] > maxScore) {
+                maxScore = plantScores[plant];
+                bestPlant = plant;
+            }
+        }
+
+        recommendationOutputEl.textContent = bestPlant;
+        confidenceOutputEl.textContent = `${(maxScore * 100).toFixed(0)}%`;
+
+        // Update Charts
+        updateCharts(ph, temp, humidity, fuzzyInputs, plantScores);
+    }
+
+    function updateCharts(ph, temp, humidity, fuzzyInputs, plantScores) {
+        // Update input charts with current value line
+        [phChart, tempChart, humidityChart].forEach(chart => {
+            let value;
+            if (chart.canvas.id === 'phChart') value = ph;
+            else if (chart.canvas.id === 'tempChart') value = temp;
+            else value = humidity;
+
+            if (chart.options.plugins.annotation && chart.options.plugins.annotation.annotations && chart.options.plugins.annotation.annotations.line1) {
+                chart.options.plugins.annotation.annotations.line1.xMin = value;
+                chart.options.plugins.annotation.annotations.line1.xMax = value;
+            }
+
+            chart.data.datasets.forEach((dataset, i) => {
+                const term = dataset.label.toLowerCase();
+                let parent;
+                if (chart.canvas.id === 'phChart') parent = 'ph';
+                else if (chart.canvas.id === 'tempChart') parent = 'temp';
+                else parent = 'humidity';
+
+                if (fuzzyInputs[parent][term] > 0) {
+                    dataset.borderColor = 'red';
+                    dataset.borderWidth = 3;
+                } else {
+                    dataset.borderColor = chartColors.line;
+                    dataset.borderWidth = 2;
+                }
+            });
+            chart.update('none');
+        });
+
+        // Update output chart
+        if (outputChart) {
+            outputChart.data.labels = Object.keys(plantScores);
+            outputChart.data.datasets[0].data = Object.values(plantScores);
+            outputChart.update();
+        }
+    }
+
+
+    function initializeSimulator() {
+        const x_ph = Array.from({length: 141}, (_, i) => i * 0.1);
+        phChart = createMembershipChart(
+            document.getElementById('phChart').getContext('2d'),
+            'pH',
+            x_ph,
+            [
+                { label: 'Asam', data: x_ph.map(fuzzyDefs.ph.asam) },
+                { label: 'Netral', data: x_ph.map(fuzzyDefs.ph.netral) },
+                { label: 'Basa', data: x_ph.map(fuzzyDefs.ph.basa) },
+            ],
+            phSlider.value,
+            'Soil pH'
+        );
+
+        const x_temp = Array.from({length: 31}, (_, i) => i + 10);
+        tempChart = createMembershipChart(
+            document.getElementById('tempChart').getContext('2d'),
+            'Suhu',
+            x_temp,
+            [
+                { label: 'Dingin', data: x_temp.map(fuzzyDefs.temp.dingin) },
+                { label: 'Normal', data: x_temp.map(fuzzyDefs.temp.normal) },
+                { label: 'Panas', data: x_temp.map(fuzzyDefs.temp.panas) },
+            ],
+            tempSlider.value,
+            'Temperature'
+        );
+
+        const x_humidity = Array.from({length: 101}, (_, i) => i);
+        humidityChart = createMembershipChart(
+            document.getElementById('humidityChart').getContext('2d'),
+            'Kelembaban',
+            x_humidity,
+            [
+                { label: 'Rendah', data: x_humidity.map(fuzzyDefs.humidity.rendah) },
+                { label: 'Sedang', data: x_humidity.map(fuzzyDefs.humidity.sedang) },
+                { label: 'Tinggi', data: x_humidity.map(fuzzyDefs.humidity.tinggi) },
+            ],
+            humiditySlider.value,
+            'Moisture'
+        );
+
+        outputChart = createOutputChart(
+            document.getElementById('outputChart').getContext('2d'),
+            plantData.map(p => p.name),
+            plantData.map(() => 0),
+            0
+        );
+
+        updateSimulator();
+    }
+
+    phSlider.addEventListener('input', updateSimulator);
+    tempSlider.addEventListener('input', updateSimulator);
+    humiditySlider.addEventListener('input', updateSimulator);
+
+    initializeSimulator();
     </script>
 </body>
+</html>
