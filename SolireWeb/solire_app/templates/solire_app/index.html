@@ -372,7 +372,10 @@
                                     <i class="bi bi-file-earmark-text me-2"></i>Generate Report
                                 </button>
                                 <button class="btn btn-outline-primary" id="refreshDatabase">
-                                    <i class="bi bi-file-earmark-text me-2"></i>Refresh
+                                    <i class="bi bi-arrow-clockwise me-2"></i>Refresh
+                                </button>
+                                <button class="btn btn-outline-danger" id="clearDatabase">
+                                    <i class="bi bi-trash me-2"></i>Clear
                                 </button>
                             </div>
                         </div>
@@ -538,6 +541,31 @@
             }
         }
 
+        async function clearData(url) {
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken(), // Include CSRF token
+                    }
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    console.log('Success:', result);
+                    return result;
+                } else {
+                    console.error('Error:', result);
+                    throw new Error(result);
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                throw error;
+            }
+        }
+
         const client = mqtt.connect(
             "wss://piperbelly008:5wtOnOVrFYnyBP7T@piperbelly008.cloud.shiftr.io",
             {
@@ -555,7 +583,6 @@
             message = message.toString().replace(/\\/g, "");
             console.log("Received MQTT message:", JSON.parse(message));
             const data = JSON.parse(message); // Parse once
-
 
             document.getElementById("realtime_ph").textContent =  data.ph_value;
             document.getElementById("realtime_moisture").textContent =  data.moisture_percent;
@@ -588,8 +615,9 @@
             console.error("MQTT error:", error);
         });
 
-        // Initial fetch for DatabaseTable on page load
+        // Buttons
         const refreshDatabaseButton = document.getElementById('refreshDatabase');
+        const clearDatabaseButton = document.getElementById('clearDatabase');
 
         refreshDatabaseButton.addEventListener('click', function() {
             fetchData('{% url 'solire_app:list_data' %}')
@@ -612,6 +640,21 @@
                 })
                 .catch(error => {
                     console.error('Initial fetch error for DatabaseTable:', error);
+                });
+        });
+
+        clearDatabase.addEventListener('click', function() {
+            clearData('{% url 'solire_app:clear_data' %}')
+                .then(response => {
+                    if (response.success) {
+                        DatabaseTable.clear().draw();
+                        console.log(response.message);
+                    } else {
+                        console.error(response.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Clear data error:', error);
                 });
         });
 
