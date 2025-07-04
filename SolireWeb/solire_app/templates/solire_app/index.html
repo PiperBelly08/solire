@@ -371,6 +371,9 @@
                                 <button class="btn btn-outline-info">
                                     <i class="bi bi-file-earmark-text me-2"></i>Generate Report
                                 </button>
+                                <button class="btn btn-outline-primary" id="refreshDatabase">
+                                    <i class="bi bi-file-earmark-text me-2"></i>Refresh
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -584,6 +587,11 @@
                  }
             }
 
+            if (LiveFeedTable.rows().count() >= 5) {
+                // LiveFeedTable.row(LiveFeedTable.rows().count() - 1).remove().draw();
+                LiveFeedTable.clear();
+            }
+
             // Only add to LiveFeedTable and insert into DB if all values are present/updated
             // You might need to buffer these if they arrive separately
             // For simplicity, let's assume if any value updates, we record the current state of all
@@ -593,10 +601,6 @@
                 temperature_value: current_temperature,
                 timestamps: new Date().toISOString()
             }).draw().order([3, 'desc']).draw();
-
-            if (LiveFeedTable.rows().count() > 10) {
-                LiveFeedTable.row(LiveFeedTable.rows().count() - 1).remove().draw();
-            }
 
             // Prepare data for backend insertion - send all known current values
             const dataForInsert = {
@@ -619,27 +623,31 @@
         });
 
         // Initial fetch for DatabaseTable on page load
-<!--        fetchData('{% url 'solire_app:list_data' %}')-->
-<!--            .then(response => {-->
-<!--                if (Array.isArray(response.data)) {-->
-<!--                    DatabaseTable.clear();-->
-<!--                    response.data.forEach(item => {-->
-<!--                        DatabaseTable.row.add([-->
-<!--                            item.id,-->
-<!--                            item.ph_value,-->
-<!--                            item.moisture_value,-->
-<!--                            item.temperature_value,-->
-<!--                            formatTimestamp(item.timestamps),-->
-<!--                        ]);-->
-<!--                    });-->
-<!--                    DatabaseTable.draw();-->
-<!--                } else {-->
-<!--                    console.error('Initial DatabaseTable data is not an array:', response.data);-->
-<!--                }-->
-<!--            })-->
-<!--            .catch(error => {-->
-<!--                console.error('Initial fetch error for DatabaseTable:', error);-->
-<!--            });-->
+        const refreshDatabaseButton = document.getElementById('refreshDatabase');
+
+        refreshDatabaseButton.addEventListener('click', function() {
+            fetchData('{% url 'solire_app:list_data' %}')
+                .then(response => {
+                    if (Array.isArray(response.data)) {
+                        DatabaseTable.clear();
+                        response.data.forEach(item => {
+                            DatabaseTable.row.add([
+                                item.id,
+                                item.ph_value,
+                                item.moisture_value,
+                                item.temperature_value,
+                                formatTimestamp(item.timestamps),
+                            ]);
+                        });
+                        DatabaseTable.draw();
+                    } else {
+                        console.error('Initial DatabaseTable data is not an array:', response.data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Initial fetch error for DatabaseTable:', error);
+                });
+        });
 
         // Fuzzy Simulator
         // --- Fuzzy Logic Simulator Scripts (from interactive-analysis.html) ---
