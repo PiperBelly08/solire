@@ -626,7 +626,7 @@
                         DatabaseTable.clear();
                         response.data.forEach(item => {
                             DatabaseTable.row.add([
-                                item.id,
+                                DatabaseTable.rows().count() + 1,
                                 item.ph_value,
                                 item.moisture_value,
                                 item.temperature_value,
