@@ -423,16 +423,16 @@
                         <div class="simulator-card space-y-4"> {# Replaced Tailwind classes #}
                             <h3 class="h5 font-weight-bold">Sensor Input</h3> {# Replaced text-xl font-bold #}
                             <div class="simulator-input-group">
-                                <label for="ph-slider" class="simulator-input-group-label">Soil pH: <span id="ph-value" class="simulator-text-value">6.5</span></label>
-                                <input id="ph-slider" type="range" min="0" max="14" value="6.5" step="0.1" class="simulator-input-group-range">
+                                <label for="ph-slider" class="simulator-input-group-label">Soil pH: <span id="ph-value" class="simulator-text-value"></span></label>
+                                <input id="ph-slider" type="range" min="0" max="14" value="0" step="0.1" class="simulator-input-group-range">
                             </div>
                             <div class="simulator-input-group">
-                                <label for="temp-slider" class="simulator-input-group-label">Temperature (°C): <span id="temp-value" class="simulator-text-value">27</span></label>
-                                <input id="temp-slider" type="range" min="10" max="40" value="27" step="1" class="simulator-input-group-range">
+                                <label for="temp-slider" class="simulator-input-group-label">Temperature (°C): <span id="temp-value" class="simulator-text-value">0</span></label>
+                                <input id="temp-slider" type="range" min="0" max="40" value="0" step="1" class="simulator-input-group-range">
                             </div>
                             <div class="simulator-input-group">
-                                <label for="moisture-slider" class="simulator-input-group-label">Moisture (%): <span id="moisture-value" class="simulator-text-value">75</span></label>
-                                <input id="moisture-slider" type="range" min="0" max="100" value="75" step="1" class="simulator-input-group-range">
+                                <label for="moisture-slider" class="simulator-input-group-label">Moisture (%): <span id="moisture-value" class="simulator-text-value">0</span></label>
+                                <input id="moisture-slider" type="range" min="0" max="100" value="0" step="1" class="simulator-input-group-range">
                             </div>
                         </div>
                     </div>
@@ -565,18 +565,18 @@
     // --- Fuzzy Logic Simulator Scripts (from interactive-analysis.html) ---
     const phSlider = document.getElementById('ph-slider');
     const tempSlider = document.getElementById('temp-slider');
-    const moistureSlider = document.getElementById('moisture-slider'); // Changed ID
+    const moistureSlider = document.getElementById('moisture-slider');
 
     const phValue = document.getElementById('ph-value');
     const tempValue = document.getElementById('temp-value');
-    const moistureValue = document.getElementById('moisture-value'); // Changed ID
+    const moistureValue = document.getElementById('moisture-value');
 
     const activeRulesEl = document.getElementById('active-rules');
     const recommendationOutputEl = document.getElementById('recommendation-output');
     const confidenceOutputEl = document.getElementById('confidence-output');
 
     // Chart.js instances
-    let phChart, tempChart, moistureChart, outputChart; // Changed variable name
+    let phChart, tempChart, moistureChart, outputChart;
 
     const chartColors = {
         line: '#6B7A40',
@@ -586,7 +586,7 @@
         text: '#374151'
     };
 
-    function createMembershipChart(ctx, label, xData, yData, inputValue, title) {
+    function createMembershipChart(ctx, label, xData, yData, inputValue, title, xMin, xMax) {
         return new Chart(ctx, {
             type: 'line',
             data: {
@@ -614,6 +614,8 @@
                 },
                 scales: {
                     x: {
+                        min: xMin,
+                        max: xMax,
                         grid: { color: chartColors.grid },
                         ticks: { color: chartColors.text }
                     },
@@ -677,7 +679,7 @@
             normal: (x) => Math.max(0, 1 - Math.abs(x - 27) / 5),
             panas: (x) => Math.max(0, 1 - Math.abs(x - 32) / 5),
         },
-        moisture: { // Changed key
+        moisture: {
             rendah: (x) => Math.max(0, 1 - Math.abs(x - 40) / 20),
             sedang: (x) => Math.max(0, 1 - Math.abs(x - 70) / 20),
             tinggi: (x) => Math.max(0, 1 - Math.abs(x - 90) / 10),
@@ -686,34 +688,34 @@
 
     // Simplified rule engine for demonstration
     const rules = [
-        { conditions: { ph: 'netral', temp: 'normal', moisture: 'sedang' }, output: 'Padi' }, // Changed
-        { conditions: { ph: 'netral', temp: 'normal', moisture: 'sedang' }, output: 'Jagung' }, // Changed
-        { conditions: { ph: 'netral', temp: 'dingin', moisture: 'sedang' }, output: 'Kedelai' }, // Changed
-        { conditions: { ph: 'asam', temp: 'normal', moisture: 'sedang' }, output: 'Kacang Tanah' }, // Changed
-        { conditions: { ph: 'netral', temp: 'normal', moisture: 'rendah' }, output: 'Kacang Hijau' }, // Changed
-        { conditions: { ph: 'asam', temp: 'normal', moisture: 'sedang' }, output: 'Ubi Kayu' }, // Changed
-        { conditions: { ph: 'netral', temp: 'dingin', moisture: 'tinggi' }, output: 'Ubi Jalar' }, // Changed
+        { conditions: { ph: 'netral', temp: 'normal', moisture: 'sedang' }, output: 'Padi' },
+        { conditions: { ph: 'netral', temp: 'normal', moisture: 'sedang' }, output: 'Jagung' },
+        { conditions: { ph: 'netral', temp: 'dingin', moisture: 'sedang' }, output: 'Kedelai' },
+        { conditions: { ph: 'asam', temp: 'normal', moisture: 'sedang' }, output: 'Kacang Tanah' },
+        { conditions: { ph: 'netral', temp: 'normal', moisture: 'rendah' }, output: 'Kacang Hijau' },
+        { conditions: { ph: 'asam', temp: 'normal', moisture: 'sedang' }, output: 'Ubi Kayu' },
+        { conditions: { ph: 'netral', temp: 'dingin', moisture: 'tinggi' }, output: 'Ubi Jalar' },
     ];
 
     const plantData = [
-        { id: 1, name: 'Padi', ph: [6.0, 7.0], temp: [24, 29], moisture: [60, 90] }, // Changed
-        { id: 2, name: 'Jagung', ph: [5.5, 7.0], temp: [21, 30], moisture: [60, 80] }, // Changed
-        { id: 3, name: 'Kedelai', ph: [6.0, 7.0], temp: [20, 25], moisture: [65, 75] }, // Changed
-        { id: 4, name: 'Kacang Tanah', ph: [5.0, 6.5], temp: [25, 30], moisture: [65, 75] }, // Changed
-        { id: 5, name: 'Kacang Hijau', ph: [5.8, 7.0], temp: [25, 30], moisture: [50, 80] }, // Changed
-        { id: 6, name: 'Ubi Kayu', ph: [4.5, 8.0], temp: [24, 30], moisture: [60, 70] }, // Changed
-        { id: 7, name: 'Ubi Jalar', ph: [5.5, 8.0], temp: [21, 27], moisture: [85, 90] } // Changed
+        { id: 1, name: 'Padi', ph: [6.0, 7.0], temp: [24, 29], moisture: [60, 90] },
+        { id: 2, name: 'Jagung', ph: [5.5, 7.0], temp: [21, 30], moisture: [60, 80] },
+        { id: 3, name: 'Kedelai', ph: [6.0, 7.0], temp: [20, 25], moisture: [65, 75] },
+        { id: 4, name: 'Kacang Tanah', ph: [5.0, 6.5], temp: [25, 30], moisture: [65, 75] },
+        { id: 5, name: 'Kacang Hijau', ph: [5.8, 7.0], temp: [25, 30], moisture: [50, 80] },
+        { id: 6, name: 'Ubi Kayu', ph: [4.5, 8.0], temp: [24, 30], moisture: [60, 70] },
+        { id: 7, name: 'Ubi Jalar', ph: [5.5, 8.0], temp: [21, 27], moisture: [85, 90] }
     ];
 
 
     function updateSimulator() {
         const ph = parseFloat(phSlider.value);
         const temp = parseInt(tempSlider.value);
-        const moisture = parseInt(moistureSlider.value); // Changed variable name
+        const moisture = parseInt(moistureSlider.value);
 
         phValue.textContent = ph.toFixed(1);
         tempValue.textContent = temp;
-        moistureValue.textContent = moisture; // Changed variable name
+        moistureValue.textContent = moisture;
 
         // Fuzzify
         const fuzzyInputs = {
@@ -727,10 +729,10 @@
                 normal: fuzzyDefs.temp.normal(temp),
                 panas: fuzzyDefs.temp.panas(temp)
             },
-            moisture: { // Changed key
-                rendah: fuzzyDefs.moisture.rendah(moisture), // Changed
-                sedang: fuzzyDefs.moisture.sedang(moisture), // Changed
-                tinggi: fuzzyDefs.moisture.tinggi(moisture), // Changed
+            moisture: {
+                rendah: fuzzyDefs.moisture.rendah(moisture),
+                sedang: fuzzyDefs.moisture.sedang(moisture),
+                tinggi: fuzzyDefs.moisture.tinggi(moisture),
             }
         };
 
@@ -742,12 +744,12 @@
         rules.forEach(rule => {
             const phStrength = fuzzyInputs.ph[rule.conditions.ph];
             const tempStrength = fuzzyInputs.temp[rule.conditions.temp];
-            const moistureStrength = fuzzyInputs.moisture[rule.conditions.moisture]; // Changed
+            const moistureStrength = fuzzyInputs.moisture[rule.conditions.moisture];
 
-            const strength = Math.min(phStrength, tempStrength, moistureStrength); // Changed
+            const strength = Math.min(phStrength, tempStrength, moistureStrength);
 
             if (strength > 0) {
-                 activeRulesHTML += `<p>IF pH is ${rule.conditions.ph} AND Temp is ${rule.conditions.temp} AND Moisture is ${rule.conditions.moisture} THEN ${rule.output} (Strength: ${strength.toFixed(2)})</p>`; // Changed
+                 activeRulesHTML += `<p>IF pH is ${rule.conditions.ph} AND Temp is ${rule.conditions.temp} AND Moisture is ${rule.conditions.moisture} THEN ${rule.output} (Strength: ${strength.toFixed(2)})</p>`;
                  plantScores[rule.output] = Math.max(plantScores[rule.output], strength); // Aggregation with MAX
             }
         });
@@ -768,16 +770,16 @@
         confidenceOutputEl.textContent = `${(maxScore * 100).toFixed(0)}%`;
 
         // Update Charts
-        updateCharts(ph, temp, moisture, fuzzyInputs, plantScores); // Changed
+        updateCharts(ph, temp, moisture, fuzzyInputs, plantScores);
     }
 
-    function updateCharts(ph, temp, moisture, fuzzyInputs, plantScores) { // Changed parameter name
+    function updateCharts(ph, temp, moisture, fuzzyInputs, plantScores) {
         // Update input charts with current value line
-        [phChart, tempChart, moistureChart].forEach(chart => { // Changed variable name
+        [phChart, tempChart, moistureChart].forEach(chart => {
             let value;
             if (chart.canvas.id === 'phChart') value = ph;
             else if (chart.canvas.id === 'tempChart') value = temp;
-            else value = moisture; // Changed
+            else value = moisture;
 
             if (chart.options.plugins.annotation && chart.options.plugins.annotation.annotations && chart.options.plugins.annotation.annotations.line1) {
                 chart.options.plugins.annotation.annotations.line1.xMin = value;
@@ -789,17 +791,17 @@
                 let parent;
                 if (chart.canvas.id === 'phChart') parent = 'ph';
                 else if (chart.canvas.id === 'tempChart') parent = 'temp';
-                else parent = 'moisture'; // Changed
+                else parent = 'moisture';
 
                 if (fuzzyInputs[parent][term] > 0) {
-                    dataset.borderColor = 'red';
+                    dataset.borderColor = 'red'; // Highlight active membership function
                     dataset.borderWidth = 3;
                 } else {
                     dataset.borderColor = chartColors.line;
                     dataset.borderWidth = 2;
                 }
             });
-            chart.update('none');
+            chart.update('none'); // Use 'none' for instant update without animation
         });
 
         // Update output chart
@@ -812,7 +814,22 @@
 
 
     function initializeSimulator() {
-        const x_ph = Array.from({length: 141}, (_, i) => i * 0.1);
+        // Retrieve min/max from sliders to ensure charts match
+        const ph_min = parseFloat(phSlider.min);
+        const ph_max = parseFloat(phSlider.max);
+        const ph_step = parseFloat(phSlider.step);
+
+        const temp_min = parseFloat(tempSlider.min); // Use parseFloat for consistency, even if it's an int step
+        const temp_max = parseFloat(tempSlider.max);
+        const temp_step = parseFloat(tempSlider.step);
+
+        const moisture_min = parseFloat(moistureSlider.min);
+        const moisture_max = parseFloat(moistureSlider.max);
+        const moisture_step = parseFloat(moistureSlider.step);
+
+        // Generate xData arrays based on actual slider ranges and steps
+        // The length calculation needs to be precise for floating point steps
+        const x_ph = Array.from({length: Math.floor((ph_max - ph_min) / ph_step) + 1}, (_, i) => parseFloat((ph_min + i * ph_step).toFixed(10))); // Added .toFixed(10) to mitigate float precision issues
         phChart = createMembershipChart(
             document.getElementById('phChart').getContext('2d'),
             'pH',
@@ -822,11 +839,13 @@
                 { label: 'Netral', data: x_ph.map(fuzzyDefs.ph.netral) },
                 { label: 'Basa', data: x_ph.map(fuzzyDefs.ph.basa) },
             ],
-            phSlider.value,
-            'Soil pH'
+            parseFloat(phSlider.value),
+            'Soil pH',
+            ph_min, // Pass min for x-axis scale
+            ph_max  // Pass max for x-axis scale
         );
 
-        const x_temp = Array.from({length: 31}, (_, i) => i + 10);
+        const x_temp = Array.from({length: Math.floor((temp_max - temp_min) / temp_step) + 1}, (_, i) => temp_min + i * temp_step);
         tempChart = createMembershipChart(
             document.getElementById('tempChart').getContext('2d'),
             'Suhu',
@@ -836,22 +855,26 @@
                 { label: 'Normal', data: x_temp.map(fuzzyDefs.temp.normal) },
                 { label: 'Panas', data: x_temp.map(fuzzyDefs.temp.panas) },
             ],
-            tempSlider.value,
-            'Temperature'
+            parseFloat(tempSlider.value), // Use parseFloat for consistency
+            'Temperature',
+            temp_min, // Pass min for x-axis scale
+            temp_max  // Pass max for x-axis scale
         );
 
-        const x_moisture = Array.from({length: 101}, (_, i) => i); // Changed variable name
-        moistureChart = createMembershipChart( // Changed variable name
-            document.getElementById('moistureChart').getContext('2d'), // Changed ID
+        const x_moisture = Array.from({length: Math.floor((moisture_max - moisture_min) / moisture_step) + 1}, (_, i) => moisture_min + i * moisture_step);
+        moistureChart = createMembershipChart(
+            document.getElementById('moistureChart').getContext('2d'),
             'Kelembaban',
-            x_moisture, // Changed variable name
+            x_moisture,
             [
-                { label: 'Rendah', data: x_moisture.map(fuzzyDefs.moisture.rendah) }, // Changed
-                { label: 'Sedang', data: x_moisture.map(fuzzyDefs.moisture.sedang) }, // Changed
-                { label: 'Tinggi', data: x_moisture.map(fuzzyDefs.moisture.tinggi) }, // Changed
+                { label: 'Rendah', data: x_moisture.map(fuzzyDefs.moisture.rendah) },
+                { label: 'Sedang', data: x_moisture.map(fuzzyDefs.moisture.sedang) },
+                { label: 'Tinggi', data: x_moisture.map(fuzzyDefs.moisture.tinggi) },
             ],
-            moistureSlider.value, // Changed
-            'Moisture'
+            parseFloat(moistureSlider.value), // Use parseFloat for consistency
+            'Moisture',
+            moisture_min, // Pass min for x-axis scale
+            moisture_max  // Pass max for x-axis scale
         );
 
         outputChart = createOutputChart(
@@ -861,12 +884,16 @@
             0
         );
 
-        updateSimulator();
+        // Set initial slider values to 0
+        phSlider.value = 0;
+        tempSlider.value = 0;
+        moistureSlider.value = 0;
+        updateSimulator(); // Trigger initial update with default values
     }
 
     phSlider.addEventListener('input', updateSimulator);
     tempSlider.addEventListener('input', updateSimulator);
-    moistureSlider.addEventListener('input', updateSimulator); // Changed event listener
+    moistureSlider.addEventListener('input', updateSimulator);
 
     initializeSimulator();
     </script>
