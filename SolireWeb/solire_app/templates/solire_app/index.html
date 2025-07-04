@@ -276,7 +276,7 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6 class="card-title mb-2 text-white-50">Temperature</h6>
-                                    <p class="stat-number"><span id="realtime_temperature">0</span>°</p>
+                                    <p class="stat-number"><span id="realtime_temperature">0</span>°C</p>
                                 </div>
                                 <i class="bi bi-thermometer fs-1 opacity-50"></i>
                             </div>
@@ -548,9 +548,7 @@
         client.on("connect", function () {
             console.log("Connected to MQTT broker!");
 
-            client.subscribe("Sensors/PH");
-            client.subscribe("Sensors/Temperature");
-            client.subscribe("Sensors/Moisture");
+            client.subscribe("Sensors");
         });
 
         client.on("message", function (topic, message) {
@@ -558,58 +556,26 @@
             console.log("Received MQTT message:", JSON.parse(message));
             const data = JSON.parse(message); // Parse once
 
-            let current_ph = parseFloat(document.querySelector("span#realtime_ph").textContent) || 0;
-            let current_moisture = parseFloat(document.querySelector("span#realtime_moisture").textContent) || 0;
-            let current_temperature = parseFloat(document.querySelector("span#realtime_temperature").textContent) || 0;
 
-            if (topic === "Sensors/PH" && data.ph_value !== undefined) {
-                current_ph = Number(data.ph_value);
-                document.querySelector("span#realtime_ph").textContent = current_ph;
-            } else if (topic === "Sensors/Temperature" && data.temperature_c !== undefined) {
-                current_temperature = Number(data.temperature_c);
-                document.querySelector("span#realtime_temperature").textContent = current_temperature;
-            } else if (topic === "Sensors/Moisture" && data.moisture_percent !== undefined) {
-                current_moisture = Number(data.moisture_percent);
-                document.querySelector("span#realtime_moisture").textContent = current_moisture;
-            } else {
-                 // If the message is a combined one, handle it here
-                 if (data.ph_value !== undefined) {
-                     current_ph = Number(data.ph_value);
-                     document.querySelector("span#realtime_ph").textContent = current_ph;
-                 }
-                 if (data.moisture_percent !== undefined) {
-                     current_moisture = Number(data.moisture_percent);
-                     document.querySelector("span#realtime_moisture").textContent = current_moisture;
-                 }
-                 if (data.temperature_c !== undefined) {
-                     current_temperature = Number(data.temperature_c);
-                     document.querySelector("span#realtime_temperature").textContent = current_temperature;
-                 }
-            }
+            document.getElementById("realtime_ph").textContent =  data.ph_value;
+            document.getElementById("realtime_moisture").textContent =  data.moisture_percent;
+            document.getElementById("realtime_temperature").textContent =  data.temperature_c;
 
             if (LiveFeedTable.rows().count() >= 5) {
-                // LiveFeedTable.row(LiveFeedTable.rows().count() - 1).remove().draw();
-                LiveFeedTable.clear();
+                LiveFeedTable.row(LiveFeedTable.rows().count() - 1).remove().draw();
             }
 
             // Only add to LiveFeedTable and insert into DB if all values are present/updated
             // You might need to buffer these if they arrive separately
             // For simplicity, let's assume if any value updates, we record the current state of all
             LiveFeedTable.row.add({
-                ph_value: current_ph,
-                moisture_value: current_moisture,
-                temperature_value: current_temperature,
+                ph_value: data.ph_value,
+                moisture_value: data.moisture_percent,
+                temperature_value: data.temperature_c,
                 timestamps: new Date().toISOString()
             }).draw().order([3, 'desc']).draw();
 
-            // Prepare data for backend insertion - send all known current values
-            const dataForInsert = {
-                ph_value: current_ph,
-                moisture_percent: current_moisture,
-                temperature_c: current_temperature
-            };
-
-            insertData("{% url 'solire_app:insert_data' %}", JSON.stringify(dataForInsert))
+            insertData("{% url 'solire_app:insert_data' %}", JSON.stringify(data))
                 .then(() => {
                     console.log('Data inserted successfully');
                 })
