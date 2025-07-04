@@ -544,60 +544,70 @@
 
         client.on("connect", function () {
             console.log("Connected to MQTT broker!");
-            client.subscribe("Sensors");
+
+            client.subscribe("Sensors/PH");
+            client.subscribe("Sensors/Temperature");
+            client.subscribe("Sensors/Moisture");
         });
 
         client.on("message", function (topic, message) {
             message = message.toString().replace(/\\/g, "");
             console.log("Received MQTT message:", JSON.parse(message));
+            const data = JSON.parse(message); // Parse once
 
-            const data = JSON.parse(message);
-            const ph_value = Number(data.ph_value);
-            const moisture_value = Number(data.moisture_percent);
-            const temperature_value = Number(data.temperature_c);
+            let current_ph = parseFloat(document.querySelector("span#realtime_ph").textContent) || 0;
+            let current_moisture = parseFloat(document.querySelector("span#realtime_moisture").textContent) || 0;
+            let current_temperature = parseFloat(document.querySelector("span#realtime_temperature").textContent) || 0;
 
-            document.querySelector("span#realtime_ph").textContent = ph_value;
-            document.querySelector("span#realtime_moisture").textContent = moisture_value;
-            document.querySelector("span#realtime_temperature").textContent = temperature_value;
+            if (topic === "Sensors/PH" && data.ph_value !== undefined) {
+                current_ph = Number(data.ph_value);
+                document.querySelector("span#realtime_ph").textContent = current_ph;
+            } else if (topic === "Sensors/Temperature" && data.temperature_c !== undefined) {
+                current_temperature = Number(data.temperature_c);
+                document.querySelector("span#realtime_temperature").textContent = current_temperature;
+            } else if (topic === "Sensors/Moisture" && data.moisture_percent !== undefined) {
+                current_moisture = Number(data.moisture_percent);
+                document.querySelector("span#realtime_moisture").textContent = current_moisture;
+            } else {
+                 // If the message is a combined one, handle it here
+                 if (data.ph_value !== undefined) {
+                     current_ph = Number(data.ph_value);
+                     document.querySelector("span#realtime_ph").textContent = current_ph;
+                 }
+                 if (data.moisture_percent !== undefined) {
+                     current_moisture = Number(data.moisture_percent);
+                     document.querySelector("span#realtime_moisture").textContent = current_moisture;
+                 }
+                 if (data.temperature_c !== undefined) {
+                     current_temperature = Number(data.temperature_c);
+                     document.querySelector("span#realtime_temperature").textContent = current_temperature;
+                 }
+            }
 
-            // Add the new data to the LiveFeedTable
+            // Only add to LiveFeedTable and insert into DB if all values are present/updated
+            // You might need to buffer these if they arrive separately
+            // For simplicity, let's assume if any value updates, we record the current state of all
             LiveFeedTable.row.add({
-                ph_value: ph_value,
-                moisture_value: moisture_value,
-                temperature_value: temperature_value,
-                timestamps: new Date().toISOString() // Use current time for live feed
-            }).draw().order([3, 'desc']).draw(); // Re-order to show newest at top
+                ph_value: current_ph,
+                moisture_value: current_moisture,
+                temperature_value: current_temperature,
+                timestamps: new Date().toISOString()
+            }).draw().order([3, 'desc']).draw();
 
-            // Keep only the last 10 entries in LiveFeedTable for brevity
             if (LiveFeedTable.rows().count() > 10) {
                 LiveFeedTable.row(LiveFeedTable.rows().count() - 1).remove().draw();
             }
 
-            // Insert data into your backend database
-            insertData("{% url 'solire_app:insert_data' %}", JSON.stringify(data))
+            // Prepare data for backend insertion - send all known current values
+            const dataForInsert = {
+                ph_value: current_ph,
+                moisture_percent: current_moisture,
+                temperature_c: current_temperature
+            };
+
+            insertData("{% url 'solire_app:insert_data' %}", JSON.stringify(dataForInsert))
                 .then(() => {
-                    // After successful insertion, refresh the DatabaseTable data
-                    fetchData('{% url 'solire_app:list_data' %}')
-                        .then(response => {
-                            if (Array.isArray(response.data)) {
-                                DatabaseTable.clear();
-                                response.data.forEach(item => {
-                                    DatabaseTable.row.add([
-                                        item.id,
-                                        item.ph_value,
-                                        item.moisture_value,
-                                        item.temperature_value,
-                                        formatTimestamp(item.timestamps),
-                                    ]);
-                                });
-                                DatabaseTable.draw();
-                            } else {
-                                console.error('Data for DatabaseTable is not an array:', response.data);
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error fetching data for DatabaseTable:', error);
-                        });
+                    console.log('Data inserted successfully');
                 })
                 .catch(error => {
                     console.error('Error inserting data:', error);
@@ -609,27 +619,27 @@
         });
 
         // Initial fetch for DatabaseTable on page load
-        fetchData('{% url 'solire_app:list_data' %}')
-            .then(response => {
-                if (Array.isArray(response.data)) {
-                    DatabaseTable.clear();
-                    response.data.forEach(item => {
-                        DatabaseTable.row.add([
-                            item.id,
-                            item.ph_value,
-                            item.moisture_value,
-                            item.temperature_value,
-                            formatTimestamp(item.timestamps),
-                        ]);
-                    });
-                    DatabaseTable.draw();
-                } else {
-                    console.error('Initial DatabaseTable data is not an array:', response.data);
-                }
-            })
-            .catch(error => {
-                console.error('Initial fetch error for DatabaseTable:', error);
-            });
+<!--        fetchData('{% url 'solire_app:list_data' %}')-->
+<!--            .then(response => {-->
+<!--                if (Array.isArray(response.data)) {-->
+<!--                    DatabaseTable.clear();-->
+<!--                    response.data.forEach(item => {-->
+<!--                        DatabaseTable.row.add([-->
+<!--                            item.id,-->
+<!--                            item.ph_value,-->
+<!--                            item.moisture_value,-->
+<!--                            item.temperature_value,-->
+<!--                            formatTimestamp(item.timestamps),-->
+<!--                        ]);-->
+<!--                    });-->
+<!--                    DatabaseTable.draw();-->
+<!--                } else {-->
+<!--                    console.error('Initial DatabaseTable data is not an array:', response.data);-->
+<!--                }-->
+<!--            })-->
+<!--            .catch(error => {-->
+<!--                console.error('Initial fetch error for DatabaseTable:', error);-->
+<!--            });-->
 
         // Fuzzy Simulator
         // --- Fuzzy Logic Simulator Scripts (from interactive-analysis.html) ---
