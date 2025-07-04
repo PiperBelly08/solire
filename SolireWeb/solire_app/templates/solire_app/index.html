@@ -9,6 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token }}">
 
+    {# Normalize #}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css">
 
     {# Bootstrap #}
@@ -35,12 +36,8 @@
 
     {# Chart.js #}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
-    <script>
-        // Register Chart.js Annotation Plugin immediately after its loading
-        Chart.register(ChartjsPluginAnnotation);
-    </script>
 
+    {# Font Inter #}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -134,31 +131,6 @@
             font-weight: 700;
             color: #22C55E; /* text-green-600 */
         }
-        /* Ensure the grid gap is consistent */
-        .grid {
-            display: grid;
-            gap: 1.5rem; /* Equivalent to gap-6 or gap-8, adjust as needed */
-        }
-        @media (min-width: 1024px) { /* lg breakpoint */
-            .lg\:grid-cols-3 {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-            }
-            .lg\:col-span-1 {
-                grid-column: span 1 / span 1;
-            }
-            .lg\:col-span-2 {
-                grid-column: span 2 / span 2;
-            }
-            .lg\:col-span-3 {
-                grid-column: span 3 / span 3;
-            }
-        }
-        @media (min-width: 768px) { /* md breakpoint */
-            .md\:grid-cols-2 {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-        }
-        .mb-4 { margin-bottom: 1rem; } /* Simplified margin-bottom */
     </style>
 </head>
 <body class="bg-slate-800">
@@ -266,7 +238,7 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6 class="card-title mb-2 text-white-50">Percentages</h6>
-                                    <p class="stat-number">0</p>
+                                    <p class="stat-number"><span id="dashboard_percentages">0</span></p>
                                 </div>
                                 <i class="bi bi-percent fs-1 opacity-50"></i>
                             </div>
@@ -418,7 +390,7 @@
                     This is a tool to understand the "black box" of your Mamdani Fuzzy system. Slide the inputs to change sensor values and see in real-time how the system processes them: from fuzzification, rule evaluation, to generating concrete plant recommendations through defuzzification.
                 </p>
 
-                <div class="row g-4"> {# Replaced grid lg:grid-cols-3 gap-8 with Bootstrap row and gutter #}
+                <div class="row lg-4"> {# Replaced grid lg:grid-cols-3 gap-8 with Bootstrap row and gutter #}
                     <div class="col-lg-4"> {# Replaced lg:col-span-1 #}
                         <div class="simulator-card space-y-4"> {# Replaced Tailwind classes #}
                             <h3 class="h5 font-weight-bold">Sensor Input</h3> {# Replaced text-xl font-bold #}
@@ -480,422 +452,519 @@
     <script defer src="{% static 'solire_app/js/sidebar.js' %}"></script>
 
     <script>
-    let data = [];
+    document.addEventListener('DOMContentLoaded', function() {
+        let data = [];
 
-    const DatabaseTable = new DataTable('#soilConditionsTable', {
-        responsive: true,
-    });
+        const DatabaseTable = new DataTable('#soilConditionsTable', {
+            responsive: true,
+        });
 
-    const LiveFeedTable = new DataTable('#liveFeedTable', {
-        responsive: true,
-        searching: false,
-        paging: false,
-        info: false, // Hide "Showing X of Y entries" for live feed
-        data: data, // Pass the data directly
-        columns: [
-            { data: 'ph_value' },
-            { data: 'moisture_value' },
-            { data: 'temperature_value' },
-            {
-                data: 'timestamps',
-                render: function(data, type, row) {
-                    return formatTimestamp(data);
+        const LiveFeedTable = new DataTable('#liveFeedTable', {
+            responsive: true,
+            searching: false,
+            paging: false,
+            info: false, // Hide "Showing X of Y entries" for live feed
+            data: data, // Pass the data directly
+            columns: [
+                { data: 'ph_value' },
+                { data: 'moisture_value' },
+                { data: 'temperature_value' },
+                {
+                    data: 'timestamps',
+                    render: function(data, type, row) {
+                        return formatTimestamp(data);
+                    }
                 }
-            }
-        ],
-        // Order by timestamps, descending, as backend sends newest-first.
-        order: [[3, 'desc']] // index 3 for timestamps
-    });
+            ],
+            // Order by timestamps, descending, as backend sends newest-first.
+            order: [[3, 'desc']] // index 3 for timestamps
+        });
 
-    function formatTimestamp(timestamp) {
-        const date = new Date(timestamp);
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
 
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
-        const year = date.getFullYear();
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+            const year = date.getFullYear();
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
 
-        return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
-    }
-
-// Get CSRF token from meta tag
-    function getCSRFToken() {
-        return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    }
-
-    async function fetchData(url) {
-        try {
-            const response = await fetch(url);
-            const data = await response.json();
-            return data;
-        } catch (error) {
-            console.error('Fetch error:', error);
-            throw error;
+            return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
         }
-    }
 
-    async function insertData(url, data) {
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCSRFToken(), // Include CSRF token
-                },
-                body: data
+        // Get CSRF token from meta tag
+        function getCSRFToken() {
+            return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        }
+
+        async function fetchData(url) {
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Fetch error:', error);
+                throw error;
+            }
+        }
+
+        async function insertData(url, data) {
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken(), // Include CSRF token
+                    },
+                    body: data
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    console.log('Success:', result);
+                    return result;
+                } else {
+                    console.error('Error:', result);
+                    throw new Error(result);
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                throw error;
+            }
+        }
+
+        const client = mqtt.connect(
+            "wss://piperbelly008:5wtOnOVrFYnyBP7T@piperbelly008.cloud.shiftr.io",
+            {
+                clientId: "SolireWeb",
+            }
+        );
+
+        client.on("connect", function () {
+            console.log("Connected to MQTT broker!");
+            client.subscribe("Sensors");
+        });
+
+        client.on("message", function (topic, message) {
+            message = message.toString().replace(/\\/g, "");
+            console.log("Received MQTT message:", JSON.parse(message));
+
+            const data = JSON.parse(message);
+            const ph_value = Number(data.ph_value);
+            const moisture_value = Number(data.moisture_percent);
+            const temperature_value = Number(data.temperature_c);
+
+            document.querySelector("span#realtime_ph").textContent = ph_value;
+            document.querySelector("span#realtime_moisture").textContent = moisture_value;
+            document.querySelector("span#realtime_temperature").textContent = temperature_value;
+
+            // Add the new data to the LiveFeedTable
+            LiveFeedTable.row.add({
+                ph_value: ph_value,
+                moisture_value: moisture_value,
+                temperature_value: temperature_value,
+                timestamps: new Date().toISOString() // Use current time for live feed
+            }).draw().order([3, 'desc']).draw(); // Re-order to show newest at top
+
+            // Keep only the last 10 entries in LiveFeedTable for brevity
+            if (LiveFeedTable.rows().count() > 10) {
+                LiveFeedTable.row(LiveFeedTable.rows().count() - 1).remove().draw();
+            }
+
+            // Insert data into your backend database
+            insertData("{% url 'solire_app:insert_data' %}", JSON.stringify(data))
+                .then(() => {
+                    // After successful insertion, refresh the DatabaseTable data
+                    fetchData('{% url 'solire_app:list_data' %}')
+                        .then(response => {
+                            if (Array.isArray(response.data)) {
+                                DatabaseTable.clear();
+                                response.data.forEach(item => {
+                                    DatabaseTable.row.add([
+                                        item.id,
+                                        item.ph_value,
+                                        item.moisture_value,
+                                        item.temperature_value,
+                                        formatTimestamp(item.timestamps),
+                                    ]);
+                                });
+                                DatabaseTable.draw();
+                            } else {
+                                console.error('Data for DatabaseTable is not an array:', response.data);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching data for DatabaseTable:', error);
+                        });
+                })
+                .catch(error => {
+                    console.error('Error inserting data:', error);
+                });
+        });
+
+        client.on("error", function (error) {
+            console.error("MQTT error:", error);
+        });
+
+        // Initial fetch for DatabaseTable on page load
+        fetchData('{% url 'solire_app:list_data' %}')
+            .then(response => {
+                if (Array.isArray(response.data)) {
+                    DatabaseTable.clear();
+                    response.data.forEach(item => {
+                        DatabaseTable.row.add([
+                            item.id,
+                            item.ph_value,
+                            item.moisture_value,
+                            item.temperature_value,
+                            formatTimestamp(item.timestamps),
+                        ]);
+                    });
+                    DatabaseTable.draw();
+                } else {
+                    console.error('Initial DatabaseTable data is not an array:', response.data);
+                }
+            })
+            .catch(error => {
+                console.error('Initial fetch error for DatabaseTable:', error);
             });
 
-            const result = await response.json();
+        // Fuzzy Simulator
+        // --- Fuzzy Logic Simulator Scripts (from interactive-analysis.html) ---
+        const phSlider = document.getElementById('ph-slider');
+        const tempSlider = document.getElementById('temp-slider');
+        const moistureSlider = document.getElementById('moisture-slider');
 
-            if (response.ok) {
-                console.log('Success:', result);
-                return result;
-            } else {
-                console.error('Error:', result);
-                throw new Error(result);
-            }
-        } catch (error) {
-            console.error('Fetch error:', error);
-            throw error;
-        }
-    }
+        const phValue = document.getElementById('ph-value');
+        const tempValue = document.getElementById('temp-value');
+        const moistureValue = document.getElementById('moisture-value');
 
-    // --- Fuzzy Logic Simulator Scripts (from interactive-analysis.html) ---
-    const phSlider = document.getElementById('ph-slider');
-    const tempSlider = document.getElementById('temp-slider');
-    const moistureSlider = document.getElementById('moisture-slider');
+        const activeRulesEl = document.getElementById('active-rules');
+        const recommendationOutputEl = document.getElementById('recommendation-output');
+        const confidenceOutputEl = document.getElementById('confidence-output');
 
-    const phValue = document.getElementById('ph-value');
-    const tempValue = document.getElementById('temp-value');
-    const moistureValue = document.getElementById('moisture-value');
+        // Chart.js instances
+        let phChart, tempChart, moistureChart, outputChart;
 
-    const activeRulesEl = document.getElementById('active-rules');
-    const recommendationOutputEl = document.getElementById('recommendation-output');
-    const confidenceOutputEl = document.getElementById('confidence-output');
+        const chartColors = {
+            line: '#6B7A40',
+            point: '#4A552A',
+            area: 'rgba(74, 85, 42, 0.2)',
+            grid: 'rgba(200, 200, 200, 0.2)',
+            text: '#374151'
+        };
 
-    // Chart.js instances
-    let phChart, tempChart, moistureChart, outputChart;
-
-    const chartColors = {
-        line: '#6B7A40',
-        point: '#4A552A',
-        area: 'rgba(74, 85, 42, 0.2)',
-        grid: 'rgba(200, 200, 200, 0.2)',
-        text: '#374151'
-    };
-
-    function createMembershipChart(ctx, label, xData, yData, inputValue, title, xMin, xMax) {
-        return new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: xData,
-                datasets: yData.map(d => ({ ...d, borderColor: chartColors.line, borderWidth: 2, pointRadius: 0, tension: 0.1 }))
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: { display: true, text: title, color: chartColors.text },
-                    legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } },
-                    tooltip: { enabled: false },
-                    annotation: {
-                        annotations: {
-                            line1: {
-                                type: 'line',
-                                xMin: inputValue,
-                                xMax: inputValue,
-                                borderColor: 'red',
-                                borderWidth: 2,
+        function createMembershipChart(ctx, label, xData, yData, inputValue, title, xMin, xMax) {
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: xData,
+                    datasets: yData.map(d => ({ ...d, borderColor: chartColors.line, borderWidth: 2, pointRadius: 0, tension: 0.1 }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: { display: true, text: title, color: chartColors.text },
+                        legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } },
+                        tooltip: { enabled: false },
+                        annotation: {
+                            annotations: {
+                                line1: {
+                                    type: 'line',
+                                    xMin: inputValue,
+                                    xMax: inputValue,
+                                    borderColor: 'red',
+                                    borderWidth: 2,
+                                }
                             }
                         }
-                    }
-                },
-                scales: {
-                    x: {
-                        min: xMin,
-                        max: xMax,
-                        grid: { color: chartColors.grid },
-                        ticks: { color: chartColors.text }
                     },
-                    y: {
-                        min: 0, max: 1.1,
-                        grid: { color: chartColors.grid },
-                        ticks: { color: chartColors.text }
-                    }
-                },
-                animation: { duration: 0 }
-            }
-        });
-    }
-
-    function createOutputChart(ctx, labels, data, centroid) {
-        return new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Suitability Level',
-                    data: data,
-                    backgroundColor: chartColors.area,
-                    borderColor: chartColors.line,
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: { display: false },
-                    legend: { display: false },
-                    tooltip: { enabled: true }
-                },
-                scales: {
-                     x: {
-                        grid: { display: false },
-                        ticks: { color: chartColors.text, font: { size: 10 } }
+                    scales: {
+                        x: {
+                            min: xMin,
+                            max: xMax,
+                            grid: { color: chartColors.grid },
+                            ticks: { color: chartColors.text }
+                        },
+                        y: {
+                            min: 0, max: 1.1,
+                            grid: { color: chartColors.grid },
+                            ticks: { color: chartColors.text }
+                        }
                     },
-                    y: {
-                        min: 0, max: 1,
-                        grid: { color: chartColors.grid },
-                        ticks: { color: chartColors.text }
-                    }
-                },
-                 animation: { duration: 500 }
-            }
-        });
-    }
-
-    // Fuzzy logic definitions
-    const fuzzyDefs = {
-        ph: {
-            asam: (x) => Math.max(0, 1 - Math.abs(x - 4.5) / 1.5),
-            netral: (x) => Math.max(0, 1 - Math.abs(x - 6.5) / 1.5),
-            basa: (x) => Math.max(0, 1 - Math.abs(x - 8.5) / 1.5),
-        },
-        temp: {
-            dingin: (x) => Math.max(0, 1 - Math.abs(x - 22) / 5),
-            normal: (x) => Math.max(0, 1 - Math.abs(x - 27) / 5),
-            panas: (x) => Math.max(0, 1 - Math.abs(x - 32) / 5),
-        },
-        moisture: {
-            rendah: (x) => Math.max(0, 1 - Math.abs(x - 40) / 20),
-            sedang: (x) => Math.max(0, 1 - Math.abs(x - 70) / 20),
-            tinggi: (x) => Math.max(0, 1 - Math.abs(x - 90) / 10),
+                    animation: { duration: 0 }
+                }
+            });
         }
-    };
 
-    // Simplified rule engine for demonstration
-    const rules = [
-        { conditions: { ph: 'netral', temp: 'normal', moisture: 'sedang' }, output: 'Padi' },
-        { conditions: { ph: 'netral', temp: 'normal', moisture: 'sedang' }, output: 'Jagung' },
-        { conditions: { ph: 'netral', temp: 'dingin', moisture: 'sedang' }, output: 'Kedelai' },
-        { conditions: { ph: 'asam', temp: 'normal', moisture: 'sedang' }, output: 'Kacang Tanah' },
-        { conditions: { ph: 'netral', temp: 'normal', moisture: 'rendah' }, output: 'Kacang Hijau' },
-        { conditions: { ph: 'asam', temp: 'normal', moisture: 'sedang' }, output: 'Ubi Kayu' },
-        { conditions: { ph: 'netral', temp: 'dingin', moisture: 'tinggi' }, output: 'Ubi Jalar' },
-    ];
+        function createOutputChart(ctx, labels, data, centroid) {
+            return new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Suitability Level',
+                        data: data,
+                        backgroundColor: chartColors.area,
+                        borderColor: chartColors.line,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: { display: false },
+                        legend: { display: false },
+                        tooltip: { enabled: true }
+                    },
+                    scales: {
+                         x: {
+                            grid: { display: false },
+                            ticks: { color: chartColors.text, font: { size: 10 } }
+                        },
+                        y: {
+                            min: 0, max: 1,
+                            grid: { color: chartColors.grid },
+                            ticks: { color: chartColors.text }
+                        }
+                    },
+                     animation: { duration: 500 }
+                }
+            });
+        }
 
-    const plantData = [
-        { id: 1, name: 'Padi', ph: [6.0, 7.0], temp: [24, 29], moisture: [60, 90] },
-        { id: 2, name: 'Jagung', ph: [5.5, 7.0], temp: [21, 30], moisture: [60, 80] },
-        { id: 3, name: 'Kedelai', ph: [6.0, 7.0], temp: [20, 25], moisture: [65, 75] },
-        { id: 4, name: 'Kacang Tanah', ph: [5.0, 6.5], temp: [25, 30], moisture: [65, 75] },
-        { id: 5, name: 'Kacang Hijau', ph: [5.8, 7.0], temp: [25, 30], moisture: [50, 80] },
-        { id: 6, name: 'Ubi Kayu', ph: [4.5, 8.0], temp: [24, 30], moisture: [60, 70] },
-        { id: 7, name: 'Ubi Jalar', ph: [5.5, 8.0], temp: [21, 27], moisture: [85, 90] }
-    ];
-
-
-    function updateSimulator() {
-        const ph = parseFloat(phSlider.value);
-        const temp = parseInt(tempSlider.value);
-        const moisture = parseInt(moistureSlider.value);
-
-        phValue.textContent = ph.toFixed(1);
-        tempValue.textContent = temp;
-        moistureValue.textContent = moisture;
-
-        // Fuzzify
-        const fuzzyInputs = {
+        // Fuzzy logic definitions
+        const fuzzyDefs = {
             ph: {
-                asam: fuzzyDefs.ph.asam(ph),
-                netral: fuzzyDefs.ph.netral(ph),
-                basa: fuzzyDefs.ph.basa(ph)
+                asam: (x) => Math.max(0, 1 - Math.abs(x - 4.5) / 1.5),
+                netral: (x) => Math.max(0, 1 - Math.abs(x - 6.5) / 1.5),
+                basa: (x) => Math.max(0, 1 - Math.abs(x - 8.5) / 1.5),
             },
             temp: {
-                dingin: fuzzyDefs.temp.dingin(temp),
-                normal: fuzzyDefs.temp.normal(temp),
-                panas: fuzzyDefs.temp.panas(temp)
+                dingin: (x) => Math.max(0, 1 - Math.abs(x - 22) / 5),
+                normal: (x) => Math.max(0, 1 - Math.abs(x - 27) / 5),
+                panas: (x) => Math.max(0, 1 - Math.abs(x - 32) / 5),
             },
             moisture: {
-                rendah: fuzzyDefs.moisture.rendah(moisture),
-                sedang: fuzzyDefs.moisture.sedang(moisture),
-                tinggi: fuzzyDefs.moisture.tinggi(moisture),
+                rendah: (x) => Math.max(0, 1 - Math.abs(x - 40) / 20),
+                sedang: (x) => Math.max(0, 1 - Math.abs(x - 70) / 20),
+                tinggi: (x) => Math.max(0, 1 - Math.abs(x - 90) / 10),
             }
         };
 
-        // Evaluate rules
-        let activeRulesHTML = '';
-        const plantScores = {};
-        plantData.forEach(p => plantScores[p.name] = 0);
+        // Simplified rule engine for demonstration
+        const rules = [
+            { conditions: { ph: 'netral', temp: 'normal', moisture: 'sedang' }, output: 'Padi' },
+            { conditions: { ph: 'netral', temp: 'normal', moisture: 'sedang' }, output: 'Jagung' },
+            { conditions: { ph: 'netral', temp: 'dingin', moisture: 'sedang' }, output: 'Kedelai' },
+            { conditions: { ph: 'asam', temp: 'normal', moisture: 'sedang' }, output: 'Kacang Tanah' },
+            { conditions: { ph: 'netral', temp: 'normal', moisture: 'rendah' }, output: 'Kacang Hijau' },
+            { conditions: { ph: 'asam', temp: 'normal', moisture: 'sedang' }, output: 'Ubi Kayu' },
+            { conditions: { ph: 'netral', temp: 'dingin', moisture: 'tinggi' }, output: 'Ubi Jalar' },
+        ];
 
-        rules.forEach(rule => {
-            const phStrength = fuzzyInputs.ph[rule.conditions.ph];
-            const tempStrength = fuzzyInputs.temp[rule.conditions.temp];
-            const moistureStrength = fuzzyInputs.moisture[rule.conditions.moisture];
+        const plantData = [
+            { id: 1, name: 'Padi', ph: [6.0, 7.0], temp: [24, 29], moisture: [60, 90] },
+            { id: 2, name: 'Jagung', ph: [5.5, 7.0], temp: [21, 30], moisture: [60, 80] },
+            { id: 3, name: 'Kedelai', ph: [6.0, 7.0], temp: [20, 25], moisture: [65, 75] },
+            { id: 4, name: 'Kacang Tanah', ph: [5.0, 6.5], temp: [25, 30], moisture: [65, 75] },
+            { id: 5, name: 'Kacang Hijau', ph: [5.8, 7.0], temp: [25, 30], moisture: [50, 80] },
+            { id: 6, name: 'Ubi Kayu', ph: [4.5, 8.0], temp: [24, 30], moisture: [60, 70] },
+            { id: 7, name: 'Ubi Jalar', ph: [5.5, 8.0], temp: [21, 27], moisture: [85, 90] }
+        ];
 
-            const strength = Math.min(phStrength, tempStrength, moistureStrength);
+        function updateSimulator() {
+            const ph = parseFloat(phSlider.value);
+            const temp = parseInt(tempSlider.value);
+            const moisture = parseInt(moistureSlider.value);
 
-            if (strength > 0) {
-                 activeRulesHTML += `<p>IF pH is ${rule.conditions.ph} AND Temp is ${rule.conditions.temp} AND Moisture is ${rule.conditions.moisture} THEN ${rule.output} (Strength: ${strength.toFixed(2)})</p>`;
-                 plantScores[rule.output] = Math.max(plantScores[rule.output], strength); // Aggregation with MAX
-            }
-        });
+            phValue.textContent = ph.toFixed(1);
+            tempValue.textContent = temp;
+            moistureValue.textContent = moisture;
 
-        activeRulesEl.innerHTML = activeRulesHTML || '<p>No matching rules.</p>';
+            // Fuzzify
+            const fuzzyInputs = {
+                ph: {
+                    asam: fuzzyDefs.ph.asam(ph),
+                    netral: fuzzyDefs.ph.netral(ph),
+                    basa: fuzzyDefs.ph.basa(ph)
+                },
+                temp: {
+                    dingin: fuzzyDefs.temp.dingin(temp),
+                    normal: fuzzyDefs.temp.normal(temp),
+                    panas: fuzzyDefs.temp.panas(temp)
+                },
+                moisture: {
+                    rendah: fuzzyDefs.moisture.rendah(moisture),
+                    sedang: fuzzyDefs.moisture.sedang(moisture),
+                    tinggi: fuzzyDefs.moisture.tinggi(moisture),
+                }
+            };
 
-        // Defuzzify (Find best plant)
-        let bestPlant = 'N/A';
-        let maxScore = 0;
-        for (const plant in plantScores) {
-            if (plantScores[plant] > maxScore) {
-                maxScore = plantScores[plant];
-                bestPlant = plant;
-            }
-        }
+            // Evaluate rules
+            let activeRulesHTML = '';
+            const plantScores = {};
+            plantData.forEach(p => plantScores[p.name] = 0);
 
-        recommendationOutputEl.textContent = bestPlant;
-        confidenceOutputEl.textContent = `${(maxScore * 100).toFixed(0)}%`;
+            rules.forEach(rule => {
+                const phStrength = fuzzyInputs.ph[rule.conditions.ph];
+                const tempStrength = fuzzyInputs.temp[rule.conditions.temp];
+                const moistureStrength = fuzzyInputs.moisture[rule.conditions.moisture];
 
-        // Update Charts
-        updateCharts(ph, temp, moisture, fuzzyInputs, plantScores);
-    }
+                const strength = Math.min(phStrength, tempStrength, moistureStrength);
 
-    function updateCharts(ph, temp, moisture, fuzzyInputs, plantScores) {
-        // Update input charts with current value line
-        [phChart, tempChart, moistureChart].forEach(chart => {
-            let value;
-            if (chart.canvas.id === 'phChart') value = ph;
-            else if (chart.canvas.id === 'tempChart') value = temp;
-            else value = moisture;
-
-            if (chart.options.plugins.annotation && chart.options.plugins.annotation.annotations && chart.options.plugins.annotation.annotations.line1) {
-                chart.options.plugins.annotation.annotations.line1.xMin = value;
-                chart.options.plugins.annotation.annotations.line1.xMax = value;
-            }
-
-            chart.data.datasets.forEach((dataset, i) => {
-                const term = dataset.label.toLowerCase();
-                let parent;
-                if (chart.canvas.id === 'phChart') parent = 'ph';
-                else if (chart.canvas.id === 'tempChart') parent = 'temp';
-                else parent = 'moisture';
-
-                if (fuzzyInputs[parent][term] > 0) {
-                    dataset.borderColor = 'red'; // Highlight active membership function
-                    dataset.borderWidth = 3;
-                } else {
-                    dataset.borderColor = chartColors.line;
-                    dataset.borderWidth = 2;
+                if (strength > 0) {
+                     activeRulesHTML += `<p>IF pH is ${rule.conditions.ph} AND Temp is ${rule.conditions.temp} AND Moisture is ${rule.conditions.moisture} THEN ${rule.output} (Strength: ${strength.toFixed(2)})</p>`;
+                     plantScores[rule.output] = Math.max(plantScores[rule.output], strength); // Aggregation with MAX
                 }
             });
-            chart.update('none'); // Use 'none' for instant update without animation
-        });
 
-        // Update output chart
-        if (outputChart) {
-            outputChart.data.labels = Object.keys(plantScores);
-            outputChart.data.datasets[0].data = Object.values(plantScores);
-            outputChart.update();
+            activeRulesEl.innerHTML = activeRulesHTML || '<p>No matching rules.</p>';
+
+            // Defuzzify (Find best plant)
+            let bestPlant = 'N/A';
+            let maxScore = 0;
+            for (const plant in plantScores) {
+                if (plantScores[plant] > maxScore) {
+                    maxScore = plantScores[plant];
+                    bestPlant = plant;
+                }
+            }
+
+            recommendationOutputEl.textContent = bestPlant;
+            confidenceOutputEl.textContent = `${(maxScore * 100).toFixed(0)}%`;
+
+            // Update Charts
+            updateCharts(ph, temp, moisture, fuzzyInputs, plantScores);
         }
-    }
 
+        function updateCharts(ph, temp, moisture, fuzzyInputs, plantScores) {
+            // Update input charts with current value line
+            [phChart, tempChart, moistureChart].forEach(chart => {
+                let value;
+                if (chart.canvas.id === 'phChart') value = ph;
+                else if (chart.canvas.id === 'tempChart') value = temp;
+                else value = moisture;
 
-    function initializeSimulator() {
-        // Retrieve min/max from sliders to ensure charts match
-        const ph_min = parseFloat(phSlider.min);
-        const ph_max = parseFloat(phSlider.max);
-        const ph_step = parseFloat(phSlider.step);
+                if (chart.options.plugins.annotation && chart.options.plugins.annotation.annotations && chart.options.plugins.annotation.annotations.line1) {
+                    chart.options.plugins.annotation.annotations.line1.xMin = value;
+                    chart.options.plugins.annotation.annotations.line1.xMax = value;
+                }
 
-        const temp_min = parseFloat(tempSlider.min); // Use parseFloat for consistency, even if it's an int step
-        const temp_max = parseFloat(tempSlider.max);
-        const temp_step = parseFloat(tempSlider.step);
+                chart.data.datasets.forEach((dataset, i) => {
+                    const term = dataset.label.toLowerCase();
+                    let parent;
+                    if (chart.canvas.id === 'phChart') parent = 'ph';
+                    else if (chart.canvas.id === 'tempChart') parent = 'temp';
+                    else parent = 'moisture';
 
-        const moisture_min = parseFloat(moistureSlider.min);
-        const moisture_max = parseFloat(moistureSlider.max);
-        const moisture_step = parseFloat(moistureSlider.step);
+                    if (fuzzyInputs[parent][term] > 0) {
+                        dataset.borderColor = 'red'; // Highlight active membership function
+                        dataset.borderWidth = 3;
+                    } else {
+                        dataset.borderColor = chartColors.line;
+                        dataset.borderWidth = 2;
+                    }
+                });
+                chart.update('none'); // Use 'none' for instant update without animation
+            });
 
-        // Generate xData arrays based on actual slider ranges and steps
-        // The length calculation needs to be precise for floating point steps
-        const x_ph = Array.from({length: Math.floor((ph_max - ph_min) / ph_step) + 1}, (_, i) => parseFloat((ph_min + i * ph_step).toFixed(10))); // Added .toFixed(10) to mitigate float precision issues
-        phChart = createMembershipChart(
-            document.getElementById('phChart').getContext('2d'),
-            'pH',
-            x_ph,
-            [
-                { label: 'Asam', data: x_ph.map(fuzzyDefs.ph.asam) },
-                { label: 'Netral', data: x_ph.map(fuzzyDefs.ph.netral) },
-                { label: 'Basa', data: x_ph.map(fuzzyDefs.ph.basa) },
-            ],
-            parseFloat(phSlider.value),
-            'Soil pH',
-            ph_min, // Pass min for x-axis scale
-            ph_max  // Pass max for x-axis scale
-        );
+            // Update output chart
+            if (outputChart) {
+                outputChart.data.labels = Object.keys(plantScores);
+                outputChart.data.datasets[0].data = Object.values(plantScores);
+                outputChart.update();
+            }
+        }
 
-        const x_temp = Array.from({length: Math.floor((temp_max - temp_min) / temp_step) + 1}, (_, i) => temp_min + i * temp_step);
-        tempChart = createMembershipChart(
-            document.getElementById('tempChart').getContext('2d'),
-            'Suhu',
-            x_temp,
-            [
-                { label: 'Dingin', data: x_temp.map(fuzzyDefs.temp.dingin) },
-                { label: 'Normal', data: x_temp.map(fuzzyDefs.temp.normal) },
-                { label: 'Panas', data: x_temp.map(fuzzyDefs.temp.panas) },
-            ],
-            parseFloat(tempSlider.value), // Use parseFloat for consistency
-            'Temperature',
-            temp_min, // Pass min for x-axis scale
-            temp_max  // Pass max for x-axis scale
-        );
+        function initializeSimulator() {
+            // Retrieve min/max from sliders to ensure charts match
+            const ph_min = parseFloat(phSlider.min);
+            const ph_max = parseFloat(phSlider.max);
+            const ph_step = parseFloat(phSlider.step);
 
-        const x_moisture = Array.from({length: Math.floor((moisture_max - moisture_min) / moisture_step) + 1}, (_, i) => moisture_min + i * moisture_step);
-        moistureChart = createMembershipChart(
-            document.getElementById('moistureChart').getContext('2d'),
-            'Kelembaban',
-            x_moisture,
-            [
-                { label: 'Rendah', data: x_moisture.map(fuzzyDefs.moisture.rendah) },
-                { label: 'Sedang', data: x_moisture.map(fuzzyDefs.moisture.sedang) },
-                { label: 'Tinggi', data: x_moisture.map(fuzzyDefs.moisture.tinggi) },
-            ],
-            parseFloat(moistureSlider.value), // Use parseFloat for consistency
-            'Moisture',
-            moisture_min, // Pass min for x-axis scale
-            moisture_max  // Pass max for x-axis scale
-        );
+            const temp_min = parseFloat(tempSlider.min); // Use parseFloat for consistency, even if it's an int step
+            const temp_max = parseFloat(tempSlider.max);
+            const temp_step = parseFloat(tempSlider.step);
 
-        outputChart = createOutputChart(
-            document.getElementById('outputChart').getContext('2d'),
-            plantData.map(p => p.name),
-            plantData.map(() => 0),
-            0
-        );
+            const moisture_min = parseFloat(moistureSlider.min);
+            const moisture_max = parseFloat(moistureSlider.max);
+            const moisture_step = parseFloat(moistureSlider.step);
 
-        // Set initial slider values to 0
-        phSlider.value = 0;
-        tempSlider.value = 0;
-        moistureSlider.value = 0;
-        updateSimulator(); // Trigger initial update with default values
-    }
+            // Generate xData arrays based on actual slider ranges and steps
+            // The length calculation needs to be precise for floating point steps
+            const x_ph = Array.from({length: Math.floor((ph_max - ph_min) / ph_step) + 1}, (_, i) => parseFloat((ph_min + i * ph_step).toFixed(10))); // Added .toFixed(10) to mitigate float precision issues
+            phChart = createMembershipChart(
+                document.getElementById('phChart').getContext('2d'),
+                'pH',
+                x_ph,
+                [
+                    { label: 'Asam', data: x_ph.map(fuzzyDefs.ph.asam) },
+                    { label: 'Netral', data: x_ph.map(fuzzyDefs.ph.netral) },
+                    { label: 'Basa', data: x_ph.map(fuzzyDefs.ph.basa) },
+                ],
+                parseFloat(phSlider.value),
+                'Soil pH',
+                ph_min, // Pass min for x-axis scale
+                ph_max  // Pass max for x-axis scale
+            );
 
-    phSlider.addEventListener('input', updateSimulator);
-    tempSlider.addEventListener('input', updateSimulator);
-    moistureSlider.addEventListener('input', updateSimulator);
+            const x_temp = Array.from({length: Math.floor((temp_max - temp_min) / temp_step) + 1}, (_, i) => temp_min + i * temp_step);
+            tempChart = createMembershipChart(
+                document.getElementById('tempChart').getContext('2d'),
+                'Suhu',
+                x_temp,
+                [
+                    { label: 'Dingin', data: x_temp.map(fuzzyDefs.temp.dingin) },
+                    { label: 'Normal', data: x_temp.map(fuzzyDefs.temp.normal) },
+                    { label: 'Panas', data: x_temp.map(fuzzyDefs.temp.panas) },
+                ],
+                parseFloat(tempSlider.value), // Use parseFloat for consistency
+                'Temperature',
+                temp_min, // Pass min for x-axis scale
+                temp_max  // Pass max for x-axis scale
+            );
 
-    initializeSimulator();
+            const x_moisture = Array.from({length: Math.floor((moisture_max - moisture_min) / moisture_step) + 1}, (_, i) => moisture_min + i * moisture_step);
+            moistureChart = createMembershipChart(
+                document.getElementById('moistureChart').getContext('2d'),
+                'Kelembaban',
+                x_moisture,
+                [
+                    { label: 'Rendah', data: x_moisture.map(fuzzyDefs.moisture.rendah) },
+                    { label: 'Sedang', data: x_moisture.map(fuzzyDefs.moisture.sedang) },
+                    { label: 'Tinggi', data: x_moisture.map(fuzzyDefs.moisture.tinggi) },
+                ],
+                parseFloat(moistureSlider.value), // Use parseFloat for consistency
+                'Moisture',
+                moisture_min, // Pass min for x-axis scale
+                moisture_max  // Pass max for x-axis scale
+            );
+
+            outputChart = createOutputChart(
+                document.getElementById('outputChart').getContext('2d'),
+                plantData.map(p => p.name),
+                plantData.map(() => 0),
+                0
+            );
+
+            // Set initial slider values to 0
+            phSlider.value = 0;
+            tempSlider.value = 0;
+            moistureSlider.value = 0;
+            updateSimulator(); // Trigger initial update with default values
+        }
+
+        phSlider.addEventListener('input', updateSimulator);
+        tempSlider.addEventListener('input', updateSimulator);
+        moistureSlider.addEventListener('input', updateSimulator);
+
+        initializeSimulator();
+    });
     </script>
 </body>
 </html>
