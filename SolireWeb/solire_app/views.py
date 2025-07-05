@@ -4,8 +4,13 @@ from django.http import JsonResponse, HttpResponse
 from openpyxl import Workbook
 from openpyxl.styles import Font
 import json
+from .helpers import PlantRecommendationFuzzySystem
 
 from .models import SoilCondition
+
+# Initialize the fuzzy system globally or as a singleton
+# This avoids re-initializing the system on every request, which can be slow.
+fuzzy_system_instance = PlantRecommendationFuzzySystem()
 
 def index(request):
     return render(
@@ -110,3 +115,51 @@ def generate_report(request):
             'success': False,
             'error': str(e)
         }, status=500)
+
+def recommend_plant(request):
+    if request.method == 'GET':
+        # Get parameters from GET request (e.g., /recommend/?ph=6.5&temp=28&humidity=70)
+        try:
+            ph_value = float(request.GET.get('ph'))
+            temp_value = float(request.GET.get('temp'))
+            humidity_value = float(request.GET.get('humidity'))
+        except (TypeError, ValueError):
+            return JsonResponse({'error': 'Invalid or missing input parameters. Please provide ph, temp, and humidity as numbers.'}, status=400)
+
+        try:
+            recommendation_results = fuzzy_system_instance.get_plant_recommendation(
+                ph_value, temp_value, humidity_value
+            )
+            return JsonResponse(recommendation_results)
+        except ValueError as e:
+            return JsonResponse({'error': str(e)}, status=400)
+        except Exception as e:
+            # Catch any other unexpected errors from the fuzzy system
+            return JsonResponse({'error': f'An unexpected error occurred: {e}'}, status=500)
+
+    elif request.method == 'POST':
+        # Get parameters from POST request (e.g., JSON payload)
+        import json
+        try:
+            data = json.loads(request.body)
+            ph_value = float(data.get('ph'))
+            temp_value = float(data.get('temp'))
+            humidity_value = float(data.get('humidity'))
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return JsonResponse({'error': 'Invalid JSON or missing input parameters. Please provide ph, temp, and humidity as numbers.'}, status=400)
+
+        try:
+            recommendation_results = fuzzy_system_instance.get_plant_recommendation(
+                ph_value, temp_value, humidity_value
+            )
+            return JsonResponse(recommendation_results)
+        except ValueError as e:
+            return JsonResponse({'error': str(e)}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': f'An unexpected error occurred: {e}'}, status=500)
+
+    return JsonResponse({'error': 'Only GET and POST requests are supported.'}, status=405)
+
+def recommendation_form(request):
+    # A simple view to render a form for input
+    return render(request, 'recommendation/recommendation_form.html')
