@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+from openpyxl import Workbook
+from openpyxl.styles import Font
 import json
 
 from .models import SoilCondition
@@ -71,11 +73,6 @@ def clear_data(request):
             'success': False,
             'error': str(e)
         }, status=500)
-    
-from openpyxl import Workbook
-from openpyxl.styles import Font
-
-from django.http import HttpResponse
 
 def generate_report(request):
     """
