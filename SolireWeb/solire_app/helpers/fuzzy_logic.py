@@ -179,7 +179,7 @@ class PlantRecommendationFuzzySystem:
         """
 
         # Validate inputs
-        if not (0 <= ph_value <= 14):
+        if not (0.0 <= float(ph_value) <= 14.0):
             raise ValueError("pH value must be between 0 and 14")
         if not (0 <= temp_value <= 50):
             raise ValueError("Temperature must be between 0 and 50°C")
@@ -192,7 +192,7 @@ class PlantRecommendationFuzzySystem:
         for plant_name, simulator in self.simulators.items():
             try:
                 # Set input values
-                simulator.input['ph'] = ph_value
+                simulator.input['ph'] = float(ph_value)
                 simulator.input['temperature'] = temp_value
                 simulator.input['humidity'] = humidity_value
 
