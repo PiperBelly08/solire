@@ -268,40 +268,40 @@ class PlantRecommendationFuzzySystem:
         else:
             return f"{top_plant['plant']} is the best option available, though conditions are not optimal."
 
-    def visualize_membership_functions(self, save_plots=False):
-        """
-        Visualize the membership functions for inputs.
-        This method is typically not used in a deployed Django app,
-        but kept for development/debugging purposes.
-        """
-        import matplotlib.pyplot as plt # Import locally to avoid dependency if not needed
-
-        fig, axes = plt.subplots(3, 1, figsize=(12, 10))
-
-        # pH membership functions
-        self.ph.view(sim=axes[0])
-        axes[0].set_title('pH Membership Functions')
-        axes[0].set_xlabel('pH Value')
-        axes[0].set_ylabel('Membership Degree')
-
-        # Temperature membership functions
-        self.temperature.view(sim=axes[1])
-        axes[1].set_title('Temperature Membership Functions')
-        axes[1].set_xlabel('Temperature (°C)')
-        axes[1].set_ylabel('Membership Degree')
-
-        # Humidity membership functions
-        self.humidity.view(sim=axes[2])
-        axes[2].set_title('Humidity Membership Functions')
-        axes[2].set_xlabel('Humidity (%)')
-        axes[2].set_ylabel('Membership Degree')
-
-        plt.tight_layout()
-
-        if save_plots:
-            plt.savefig('membership_functions.png', dpi=300, bbox_inches='tight')
-
-        plt.show()
+    # def visualize_membership_functions(self, save_plots=False):
+    #     """
+    #     Visualize the membership functions for inputs.
+    #     This method is typically not used in a deployed Django app,
+    #     but kept for development/debugging purposes.
+    #     """
+    #     #import matplotlib.pyplot as plt # Import locally to avoid dependency if not needed
+    #
+    #     fig, axes = plt.subplots(3, 1, figsize=(12, 10))
+    #
+    #     # pH membership functions
+    #     self.ph.view(sim=axes[0])
+    #     axes[0].set_title('pH Membership Functions')
+    #     axes[0].set_xlabel('pH Value')
+    #     axes[0].set_ylabel('Membership Degree')
+    #
+    #     # Temperature membership functions
+    #     self.temperature.view(sim=axes[1])
+    #     axes[1].set_title('Temperature Membership Functions')
+    #     axes[1].set_xlabel('Temperature (°C)')
+    #     axes[1].set_ylabel('Membership Degree')
+    #
+    #     # Humidity membership functions
+    #     self.humidity.view(sim=axes[2])
+    #     axes[2].set_title('Humidity Membership Functions')
+    #     axes[2].set_xlabel('Humidity (%)')
+    #     axes[2].set_ylabel('Membership Degree')
+    #
+    #     plt.tight_layout()
+    #
+    #     if save_plots:
+    #         plt.savefig('membership_functions.png', dpi=300, bbox_inches='tight')
+    #
+    #     plt.show()
 
     def get_plant_optimal_conditions(self, plant_name):
         """Get the optimal conditions for a specific plant"""

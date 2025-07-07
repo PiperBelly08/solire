@@ -3,10 +3,10 @@ from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse, HttpResponse
 from openpyxl import Workbook
 from openpyxl.styles import Font
-import json
-from .helpers import PlantRecommendationFuzzySystem
 
+from .helpers.fuzzy_logic import PlantRecommendationFuzzySystem
 from .models import SoilCondition
+import json
 
 # Initialize the fuzzy system globally or as a singleton
 # This avoids re-initializing the system on every request, which can be slow.
@@ -89,7 +89,7 @@ def generate_report(request):
         ws = wb.active
 
         # Set header row
-        header_row = ['#', 'Temperature (C)', 'Moisture (%)', 'pH', 'Timestamps']
+        header_row = ['#', 'Temperature (C)', 'Moisture (%)', 'pH', 'Recommended Plants', 'Timestamps']
         for col, val in enumerate(header_row, start=1):
             cell = ws.cell(row=1, column=col)
             cell.value = val
@@ -97,11 +97,32 @@ def generate_report(request):
 
         # Set data rows
         for row_idx, sc in enumerate(soil_conditions, start=2):
+            # if sc.temperature_value < 0 or sc.temperature_value > 50:
+            #     return JsonResponse({
+            #         'success': False,
+            #         'error': 'Temperature value must be between 0 and 50'
+            #     }, status=400)
+            # if sc.moisture_value < 0 or sc.moisture_value > 100:
+            #     return JsonResponse({
+            #         'success': False,
+            #         'error': 'Moisture value must be between 0 and 100'
+            #     }, status=400)
+            # if sc.ph_value < 0 or sc.ph_value > 14:
+            #     return JsonResponse({
+            #         'success': False,
+            #         'error': 'pH value must be between 0 and 14'
+            #     }, status=400)
+
+            # Convert pH value into float
+            ph_value = float(sc.ph_value)
+
+            # recommended_plant = fuzzy_system_instance.get_plant_recommendation(sc.temperature_value, sc.moisture_value, ph_value)['recommended_plant']
             ws.cell(row=row_idx, column=1).value = row_idx - 1
             ws.cell(row=row_idx, column=2).value = sc.temperature_value
             ws.cell(row=row_idx, column=3).value = sc.moisture_value
-            ws.cell(row=row_idx, column=4).value = sc.ph_value
-            ws.cell(row=row_idx, column=5).value = sc.timestamps.strftime('%d-%m-%Y %H:%M:%S')
+            ws.cell(row=row_idx, column=4).value = ph_value
+            ws.cell(row=row_idx, column=5).value = '' # recommended_plant
+            ws.cell(row=row_idx, column=6).value = sc.timestamps.strftime('%d-%m-%Y %H:%M:%S')
 
         # Prepare the file for download
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')

@@ -286,7 +286,7 @@
             </div>
 
             <div class="row">
-                <div class="col-lg-8 mb-4">
+                <div class="col-lg-12 mb-4">
                     <div class="card">
                         <div class="card-header bg-white">
                             <h5 class="card-title mb-0">Live Feed</h5>
@@ -305,21 +305,6 @@
                                     <tbody>
                                     </tbody>
                                 </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-4 mb-4">
-                    <div class="card">
-                        <div class="card-header bg-white">
-                            <h5 class="card-title mb-0">Quick Actions</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="d-grid gap-2">
-                                <button class="btn btn-outline-info">
-                                    <i class="bi bi-file-earmark-text me-2"></i>Generate Report
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -399,7 +384,7 @@
                 <div class="row lg-4"> {# Replaced grid lg:grid-cols-3 gap-8 with Bootstrap row and gutter #}
                     <div class="col-lg-4"> {# Replaced lg:col-span-1 #}
                         <div class="simulator-card space-y-4"> {# Replaced Tailwind classes #}
-                            <h3 class="h5 font-weight-bold">Sensor Input</h3> {# Replaced text-xl font-bold #}
+                            <h3 class="h5 font-weight-bold">Input</h3> {# Replaced text-xl font-bold #}
                             <div class="simulator-input-group">
                                 <label for="ph-slider" class="simulator-input-group-label">Soil pH: <span id="ph-value" class="simulator-text-value"></span></label>
                                 <input id="ph-slider" type="range" min="0" max="14" value="0" step="0.1" class="simulator-input-group-range">
@@ -426,7 +411,7 @@
                         </div>
                     </div>
 
-                    <div class="col-lg-12"> {# Replaced lg:col-span-3 #}
+                    <div class="col-lg-12 py-4"> {# Replaced lg:col-span-3 #}
                         <div class="simulator-card"> {# Replaced Tailwind classes #}
                              <h3 class="h5 font-weight-bold mb-4">Results & Recommendation</h3>
                              <div class="row g-4 align-items-center"> {# Replaced grid md:grid-cols-2 gap-8 items-center #}
