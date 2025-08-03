@@ -14,12 +14,12 @@ class PlantRecommendationFuzzySystem:
         # Plant database from Table 2.2 "Tanaman Pangan"
         self.plant_database = {
             'Padi': {'ph': (6.0, 7.0), 'temp': (24, 29), 'humidity': (60, 90)},
-            'Jagung': {'ph': (5.8, 8.0), 'temp': (21, 34), 'humidity': (50, 80)},
-            'Kedelai': {'ph': (6.0, 7.0), 'temp': (20, 25), 'humidity': (60, 80)},
-            'Kacang_Tanah': {'ph': (5.8, 7.0), 'temp': (23, 33), 'humidity': (65, 75)},
-            'Kacang_Hijau': {'ph': (6.0, 7.0), 'temp': (25, 35), 'humidity': (50, 80)},
-            'Ubi_Kayu': {'ph': (4.5, 8.0), 'temp': (24, 30), 'humidity': (70, 85)},
-            'Ubi_Jalar': {'ph': (5.5, 8.0), 'temp': (21, 27), 'humidity': (65, 80)}
+            'Jagung': {'ph': (5.6, 6.2), 'temp': (23, 27), 'humidity': (62, 74)},
+            'Kedelai': {'ph': (5.8, 7.0), 'temp': (20, 25), 'humidity': (60, 70)},
+            'Kacang_Tanah': {'ph': (6.0, 6.5), 'temp': (23, 26.5), 'humidity': (65, 75)},
+            'Kacang_Hijau': {'ph': (6.0, 6.5), 'temp': (20, 30), 'humidity': (50, 80)},
+            'Ubi_Kayu': {'ph': (4.5, 8.0), 'temp': (24, 30), 'humidity': (60, 65)},
+            'Ubi_Jalar': {'ph': (5.5, 8.0), 'temp': (21, 27), 'humidity': (65, 75)}
         }
 
         self.setup_fuzzy_system()
@@ -51,26 +51,40 @@ class PlantRecommendationFuzzySystem:
         """Define membership functions for input variables"""
 
         # pH membership functions
-        self.ph['acidic'] = fuzz.trapmf(self.ph.universe, [0, 0, 4.5, 6.0])
-        self.ph['neutral'] = fuzz.trimf(self.ph.universe, [5.0, 6.5, 8.0])
-        self.ph['alkaline'] = fuzz.trapmf(self.ph.universe, [7.0, 8.5, 14, 14])
+        self.ph['acidic'] = fuzz.trapmf(self.ph.universe, [0, 0, 5, 6.5])
+        self.ph['neutral'] = fuzz.trimf(self.ph.universe, [5.5, 6.5, 7.5])
+        self.ph['alkaline'] = fuzz.trapmf(self.ph.universe, [7, 8, 14, 14])
 
         # Temperature membership functions (°C)
         self.temperature['cold'] = fuzz.trapmf(self.temperature.universe, [0, 0, 18, 23])
-        self.temperature['normal'] = fuzz.trimf(self.temperature.universe, [20, 27, 32])
-        self.temperature['hot'] = fuzz.trapmf(self.temperature.universe, [30, 35, 50, 50])
+        self.temperature['normal'] = fuzz.trimf(self.temperature.universe, [20, 26, 32])
+        self.temperature['hot'] = fuzz.trapmf(self.temperature.universe, [30, 35, 40, 40])
 
         # Humidity membership functions (%)
         self.humidity['low'] = fuzz.trapmf(self.humidity.universe, [0, 0, 45, 60])
         self.humidity['medium'] = fuzz.trimf(self.humidity.universe, [50, 70, 85])
         self.humidity['high'] = fuzz.trapmf(self.humidity.universe, [80, 90, 100, 100])
 
+        # self.ph['acidic'] = fuzz.trimf(self.ph.universe, [3.0, 4.5, 6.0]) # Base 3.0 to 6.0, center 4.5 (4.5 - 1.5 = 3.0, 4.5 + 1.5 = 6.0)
+        # self.ph['neutral'] = fuzz.trimf(self.ph.universe, [5.0, 6.5, 8.0]) # Base 5.0 to 8.0, center 6.5 (6.5 - 1.5 = 5.0, 6.5 + 1.5 = 8.0)
+        # self.ph['alkaline'] = fuzz.trimf(self.ph.universe, [7.0, 8.5, 10.0]) # Base 7.0 to 10.0, center 8.5 (8.5 - 1.5 = 7.0, 8.5 + 1.5 = 10.0)
+        #
+        # # Temperature: dingin (22, 5), normal (27, 5), panas (32, 5) - simplified triangles
+        # self.temperature['cold'] = fuzz.trimf(self.temperature.universe, [17, 22, 27]) # Base 17 to 27, center 22 (22 - 5 = 17, 22 + 5 = 27)
+        # self.temperature['normal'] = fuzz.trimf(self.temperature.universe, [22, 27, 32]) # Base 22 to 32, center 27 (27 - 5 = 22, 27 + 5 = 32)
+        # self.temperature['hot'] = fuzz.trimf(self.temperature.universe, [27, 32, 37]) # Base 27 to 37, center 32 (32 - 5 = 27, 32 + 5 = 37)
+        #
+        # # Moisture: rendah (40, 20), sedang (70, 20), tinggi (90, 10) - simplified triangles
+        # self.humidity['low'] = fuzz.trimf(self.humidity.universe, [20, 40, 60]) # Base 20 to 60, center 40 (40 - 20 = 20, 40 + 20 = 60)
+        # self.humidity['medium'] = fuzz.trimf(self.humidity.universe, [50, 70, 90]) # Base 50 to 90, center 70 (70 - 20 = 50, 70 + 20 = 90)
+        # self.humidity['high'] = fuzz.trimf(self.humidity.universe, [80, 90, 100]) # Base 80 to 100, center 90 (90 - 10 = 80, 90 + 10 = 100) # Note the asymmetry in JS (90, 10)
+
     def _setup_output_membership_functions(self):
         """Define membership functions for output variables (plant suitability)"""
 
         for plant_name, plant_output in self.plant_outputs.items():
-            plant_output['unsuitable'] = fuzz.trimf(plant_output.universe, [0, 0, 0.3])
-            plant_output['moderate'] = fuzz.trimf(plant_output.universe, [0.2, 0.5, 0.8])
+            plant_output['unsuitable'] = fuzz.trimf(plant_output.universe, [0, 0, 0.4])
+            plant_output['moderate'] = fuzz.trimf(plant_output.universe, [0.2, 0.6, 0.8])
             plant_output['suitable'] = fuzz.trimf(plant_output.universe, [0.7, 1.0, 1.0])
 
     def _setup_fuzzy_rules(self):
@@ -80,35 +94,30 @@ class PlantRecommendationFuzzySystem:
 
         # Rules for Padi (pH: 6.0-7.0, Temp: 24-29°C, Humidity: 60-90%)
         self.rule_sets['Padi'] = [
-            ctrl.Rule(self.ph['neutral'] & self.temperature['normal'] & self.humidity['medium'],
-                      self.plant_outputs['Padi']['suitable']),
-            ctrl.Rule(self.ph['neutral'] & self.temperature['normal'] & self.humidity['high'],
-                      self.plant_outputs['Padi']['suitable']),
-            ctrl.Rule(self.ph['acidic'] & self.temperature['normal'] & self.humidity['medium'],
-                      self.plant_outputs['Padi']['moderate']),
-            ctrl.Rule(self.ph['alkaline'] | self.temperature['cold'] | self.humidity['low'],
+            ctrl.Rule(
+                self.ph['neutral'] & self.temperature['normal'] & (self.humidity['medium'] | self.humidity['high']),
+                self.plant_outputs['Padi']['suitable']),
+            ctrl.Rule(self.ph['acidic'] & self.temperature['normal'], self.plant_outputs['Padi']['moderate']),
+            ctrl.Rule(self.ph['alkaline'] | self.temperature['cold'] | self.temperature['hot'] | self.humidity['low'],
                       self.plant_outputs['Padi']['unsuitable'])
         ]
 
         # Rules for Jagung (pH: 5.8-8.0, Temp: 21-34°C, Humidity: 50-80%)
         self.rule_sets['Jagung'] = [
-            ctrl.Rule(self.ph['neutral'] & self.temperature['normal'] & self.humidity['medium'],
+            ctrl.Rule((self.ph['acidic'] | self.ph['neutral']) & self.temperature['normal'] & self.humidity['medium'],
                       self.plant_outputs['Jagung']['suitable']),
-            ctrl.Rule(self.ph['neutral'] & self.temperature['hot'] & self.humidity['medium'],
-                      self.plant_outputs['Jagung']['suitable']),
-            ctrl.Rule(self.ph['alkaline'] & self.temperature['normal'] & self.humidity['medium'],
-                      self.plant_outputs['Jagung']['moderate']),
-            ctrl.Rule(self.ph['acidic'] & self.temperature['cold'] & self.humidity['low'],
+            ctrl.Rule(self.ph['alkaline'] | self.temperature['cold'] | self.temperature['hot'] | self.humidity['low'] |
+                      self.humidity['high'],
                       self.plant_outputs['Jagung']['unsuitable'])
         ]
 
         # Rules for Kedelai (pH: 6.0-7.0, Temp: 20-25°C, Humidity: 60-80%)
         self.rule_sets['Kedelai'] = [
-            ctrl.Rule(self.ph['neutral'] & self.temperature['normal'] & self.humidity['medium'],
-                      self.plant_outputs['Kedelai']['suitable']),
-            ctrl.Rule(self.ph['neutral'] & self.temperature['cold'] & self.humidity['medium'],
-                      self.plant_outputs['Kedelai']['moderate']),
-            ctrl.Rule(self.ph['acidic'] | self.temperature['hot'] | self.humidity['low'],
+            ctrl.Rule(
+                self.ph['neutral'] & (self.temperature['cold'] | self.temperature['normal']) & self.humidity['medium'],
+                self.plant_outputs['Kedelai']['suitable']),
+            ctrl.Rule(self.ph['acidic'] & self.humidity['medium'], self.plant_outputs['Kedelai']['moderate']),
+            ctrl.Rule(self.ph['alkaline'] | self.temperature['hot'] | self.humidity['low'] | self.humidity['high'],
                       self.plant_outputs['Kedelai']['unsuitable'])
         ]
 
@@ -116,43 +125,39 @@ class PlantRecommendationFuzzySystem:
         self.rule_sets['Kacang_Tanah'] = [
             ctrl.Rule(self.ph['neutral'] & self.temperature['normal'] & self.humidity['medium'],
                       self.plant_outputs['Kacang_Tanah']['suitable']),
-            ctrl.Rule(self.ph['neutral'] & self.temperature['hot'] & self.humidity['medium'],
-                      self.plant_outputs['Kacang_Tanah']['suitable']),
-            ctrl.Rule(self.ph['acidic'] & self.temperature['normal'] & self.humidity['medium'],
+            ctrl.Rule(self.ph['acidic'] & self.temperature['normal'],
                       self.plant_outputs['Kacang_Tanah']['moderate']),
-            ctrl.Rule(self.ph['alkaline'] | self.temperature['cold'] | self.humidity['high'],
+            ctrl.Rule(self.ph['alkaline'] | self.temperature['cold'] | self.temperature['hot'] | self.humidity['low'] |
+                      self.humidity['high'],
                       self.plant_outputs['Kacang_Tanah']['unsuitable'])
         ]
 
         # Rules for Kacang Hijau (pH: 6.0-7.0, Temp: 25-35°C, Humidity: 50-80%)
         self.rule_sets['Kacang_Hijau'] = [
-            ctrl.Rule(self.ph['neutral'] & self.temperature['hot'] & self.humidity['medium'],
+            ctrl.Rule(self.ph['neutral'] & (self.temperature['cold'] | self.temperature['normal']) & (
+                        self.humidity['low'] | self.humidity['medium']),
                       self.plant_outputs['Kacang_Hijau']['suitable']),
-            ctrl.Rule(self.ph['neutral'] & self.temperature['normal'] & self.humidity['low'],
-                      self.plant_outputs['Kacang_Hijau']['moderate']),
-            ctrl.Rule(self.ph['acidic'] | self.temperature['cold'] | self.humidity['high'],
+            ctrl.Rule(self.ph['acidic'] & self.temperature['normal'], self.plant_outputs['Kacang_Hijau']['moderate']),
+            ctrl.Rule(self.ph['alkaline'] | self.temperature['hot'] | self.humidity['high'],
                       self.plant_outputs['Kacang_Hijau']['unsuitable'])
         ]
 
         # Rules for Ubi Kayu (pH: 4.5-8.0, Temp: 24-30°C, Humidity: 70-85%)
         self.rule_sets['Ubi_Kayu'] = [
-            ctrl.Rule(self.ph['acidic'] & self.temperature['normal'] & self.humidity['high'],
+            ctrl.Rule((self.ph['acidic'] | self.ph['neutral'] | self.ph['alkaline']) & self.temperature['normal'] & (
+                        self.humidity['low'] | self.humidity['medium']),
                       self.plant_outputs['Ubi_Kayu']['suitable']),
-            ctrl.Rule(self.ph['neutral'] & self.temperature['normal'] & self.humidity['medium'],
-                      self.plant_outputs['Ubi_Kayu']['suitable']),
-            ctrl.Rule(self.ph['alkaline'] & self.temperature['normal'] & self.humidity['medium'],
-                      self.plant_outputs['Ubi_Kayu']['moderate']),
-            ctrl.Rule(self.temperature['cold'] | self.humidity['low'],
+            ctrl.Rule(self.temperature['cold'] | self.temperature['hot'] | self.humidity['high'],
                       self.plant_outputs['Ubi_Kayu']['unsuitable'])
         ]
 
         # Rules for Ubi Jalar (pH: 5.5-8.0, Temp: 21-27°C, Humidity: 65-80%)
         self.rule_sets['Ubi_Jalar'] = [
-            ctrl.Rule(self.ph['neutral'] & self.temperature['normal'] & self.humidity['medium'],
-                      self.plant_outputs['Ubi_Jalar']['suitable']),
-            ctrl.Rule(self.ph['alkaline'] & self.temperature['normal'] & self.humidity['medium'],
-                      self.plant_outputs['Ubi_Jalar']['moderate']),
-            ctrl.Rule(self.ph['acidic'] | self.temperature['hot'] | self.humidity['low'],
+            ctrl.Rule(
+                (self.ph['neutral'] | self.ph['alkaline']) & (self.temperature['cold'] | self.temperature['normal']) &
+                self.humidity['medium'],
+                self.plant_outputs['Ubi_Jalar']['suitable']),
+            ctrl.Rule(self.ph['acidic'] | self.temperature['hot'] | self.humidity['low'] | self.humidity['high'],
                       self.plant_outputs['Ubi_Jalar']['unsuitable'])
         ]
 
@@ -179,12 +184,12 @@ class PlantRecommendationFuzzySystem:
         """
 
         # Validate inputs
-        if not (0.0 <= float(ph_value) <= 14.0):
-            raise ValueError("pH value must be between 0 and 14")
-        if not (0 <= temp_value <= 50):
-            raise ValueError("Temperature must be between 0 and 50°C")
-        if not (0 <= humidity_value <= 100):
-            raise ValueError("Humidity must be between 0 and 100%")
+        # if not (0.0 <= float(ph_value) <= 14.0):
+        #     raise ValueError("pH value must be between 0 and 14")
+        # if not (0 <= temp_value <= 50):
+        #     raise ValueError("Temperature must be between 0 and 50°C")
+        # if not (0 <= humidity_value <= 100):
+        #     raise ValueError("Humidity must be between 0 and 100%")
 
         results = {}
 
@@ -243,7 +248,7 @@ class PlantRecommendationFuzzySystem:
 
         return {
             'input_conditions': {
-                'ph': ph_value,
+                'ph': float(ph_value),
                 'temperature': temp_value,
                 'humidity': humidity_value
             },

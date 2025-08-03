@@ -36,6 +36,7 @@
 
     {# Chart.js #}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
+    {# REMOVED: Chart.js Annotation Plugin script tag to fix ReferenceError #}
 
     {# Font Inter #}
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -335,11 +336,11 @@
                                             <th>PH</th>
                                             <th>Moisture</th>
                                             <th>Temperature</th>
+                                            <th>Recommended Plants</th>
                                             <th>Timestamps</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                    </tbody>
+                                    <tbody></tbody>
                                 </table>
                             </div>
                         </div>
@@ -377,10 +378,9 @@
                         <i class="bi bi-plus-circle me-2"></i>Add New
                     </button>
                 </div>
-                <p class="text-center text-lg text-secondary max-w-3xl mx-auto mb-4">
-                    This is a tool to understand the "black box" of your Mamdani Fuzzy system. Slide the inputs to change sensor values and see in real-time how the system processes them: from fuzzification, rule evaluation, to generating concrete plant recommendations through defuzzification.
-                </p>
-
+<!--                <p class="text-center text-lg text-secondary max-w-3xl mx-auto mb-4">-->
+<!--                    This is a tool to understand the "black box" of your Mamdani Fuzzy system. Slide the inputs to change sensor values and see in real-time how the system processes them: from fuzzification, rule evaluation, to generating concrete plant recommendations through defuzzification.-->
+<!--                </p>-->
                 <div class="row lg-4"> {# Replaced grid lg:grid-cols-3 gap-8 with Bootstrap row and gutter #}
                     <div class="col-lg-4"> {# Replaced lg:col-span-1 #}
                         <div class="simulator-card space-y-4"> {# Replaced Tailwind classes #}
@@ -416,8 +416,8 @@
                              <h3 class="h5 font-weight-bold mb-4">Results & Recommendation</h3>
                              <div class="row g-4 align-items-center"> {# Replaced grid md:grid-cols-2 gap-8 items-center #}
                                  <div class="col-md-6">
-                                    <h4 class="h6 font-weight-semibold">Active Fuzzy Rules:</h4> {# Replaced text-lg font-semibold #}
-                                    <div id="active-rules" class="active-rules-box"> {# Replaced Tailwind classes #}
+                                    <h4 class="h6 font-weight-semibold d-none">Active Fuzzy Rules:</h4> {# Replaced text-lg font-semibold #}
+                                    <div id="active-rules" class="active-rules-box d-none"> {# Replaced Tailwind classes #}
                                         <p>Slide the sliders to see rules...</p>
                                     </div>
                                     <h4 class="h6 font-weight-semibold mt-4">Defuzzification Process (Centroid):</h4>
@@ -444,6 +444,8 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // REMOVED: Chart.register(ChartjsPluginAnnotation); to fix ReferenceError
+
         let data = [];
 
         const DatabaseTable = new DataTable('#soilConditionsTable', {
@@ -482,6 +484,43 @@
             const seconds = String(date.getSeconds()).padStart(2, '0');
 
             return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+        }
+
+        function formatRecommendedPlants(raw) {
+            if (!raw || typeof raw !== 'string') return '<em>No data</em>';
+
+            const plantRegex = /([\w_]+) \[([\d.]+), (\w+)\]\((.*?)\)/g;
+            let match;
+            let html = '<ul style="margin: 0; padding-left: 1em;">';
+            let hasValidPlant = false;
+
+            while ((match = plantRegex.exec(raw)) !== null) {
+                const plant = match[1].replace(/_/g, ' ');
+                const score = parseFloat(match[2]);
+                const confidence = match[3];
+                const status = match[4];
+
+                if (score >= 0.5) {
+                    hasValidPlant = true;
+                    let statusColor = status.includes('Highly') ? 'green' :
+                    status.includes('Moderately') ? 'orange' : 'gray';
+
+                    html += `<li>
+                        <strong>${plant}</strong> –
+                        Score: <code>${score}</code>,
+                        Confidence: <code>${confidence}</code>,
+                        Status: <em style="color: ${statusColor};">${status}</em>
+                    </li>`;
+                }
+            }
+
+            html += '</ul>';
+
+            if (!hasValidPlant) {
+                return '<em style="color: gray;">No suitable plants (score < 0.5)</em>';
+            }
+
+            return html;
         }
 
         // Get CSRF token from meta tag
@@ -542,8 +581,8 @@
                     console.log('Success:', result);
                     return result;
                 } else {
-                    console.error('Error:', result);
-                    throw new Error(result);
+                    console.error(response.error);
+                    throw new Error(result.error); // Throw the error message
                 }
             } catch (error) {
                 console.error('Fetch error:', error);
@@ -577,9 +616,6 @@
                 LiveFeedTable.row(LiveFeedTable.rows().count() - 1).remove().draw();
             }
 
-            // Only add to LiveFeedTable and insert into DB if all values are present/updated
-            // You might need to buffer these if they arrive separately
-            // For simplicity, let's assume if any value updates, we record the current state of all
             LiveFeedTable.row.add({
                 ph_value: data.ph_value,
                 moisture_value: data.moisture_percent,
@@ -592,7 +628,7 @@
                     console.log('Data inserted successfully');
                 })
                 .catch(error => {
-                    console.error('Error inserting data:', error);
+                    console.error('Error inserting data via MQTT:', error);
                 });
         });
 
@@ -605,22 +641,24 @@
         const clearDatabaseButton = document.getElementById('clearDatabase');
 
         refreshDatabaseButton.addEventListener('click', function() {
-            fetchData('{% url 'solire_app:list_data' %}')
+            fetchData('{% url 'solire_app:list_data_with_recommendation' %}')
                 .then(response => {
-                    if (Array.isArray(response.data)) {
+                    if (response.success && Array.isArray(response.data)) {
+                        console.log(response.data);
                         DatabaseTable.clear();
-                        response.data.forEach(item => {
+                        response.data.forEach((item, index) => {
                             DatabaseTable.row.add([
-                                DatabaseTable.rows().count() + 1,
+                                index + 1, // Use index for numbering
                                 item.ph_value,
                                 item.moisture_value,
                                 item.temperature_value,
+                                formatRecommendedPlants(item.recommended_plants),
                                 formatTimestamp(item.timestamps),
                             ]);
                         });
                         DatabaseTable.draw();
                     } else {
-                        console.error('Initial DatabaseTable data is not an array:', response.data);
+                        console.error('Initial DatabaseTable data is not an array or success is false:', response);
                     }
                 })
                 .catch(error => {
@@ -628,7 +666,7 @@
                 });
         });
 
-        clearDatabase.addEventListener('click', function() {
+        clearDatabaseButton.addEventListener('click', function() {
             clearData('{% url 'solire_app:clear_data' %}')
                 .then(response => {
                     if (response.success) {
@@ -636,12 +674,17 @@
                         console.log(response.message);
                     } else {
                         console.error(response.error);
+                        alert(`Error clearing data: ${response.error}`); // User feedback
                     }
                 })
                 .catch(error => {
                     console.error('Clear data error:', error);
+                    alert(`Failed to clear data: ${error.message || error}`); // User feedback
                 });
         });
+
+        // Initialize database table on page load
+        refreshDatabaseButton.click(); // Trigger initial load
 
         // Fuzzy Simulator
         // --- Fuzzy Logic Simulator Scripts (from interactive-analysis.html) ---
@@ -668,12 +711,250 @@
             text: '#374151'
         };
 
+        // Helper function for triangular membership (same as skfuzzy.trimf)
+        function trimf(x, a, b, c) {
+            if (x <= a || x >= c) {
+                return 0;
+            } else if (x < b) {
+                return (x - a) / (b - a);
+            } else { // x >= b
+                return (c - x) / (c - b);
+            }
+        }
+
+        // Helper function for trapezoidal membership (same as skfuzzy.trapmf)
+        function trapmf(x, a, b, c, d) {
+            if (x <= a || x >= d) {
+                return 0;
+            } else if (x >= b && x <= c) {
+                return 1;
+            } else if (x > a && x < b) {
+                return (x - a) / (b - a);
+            } else { // x > c && x < d
+                return (d - x) / (d - c);
+            }
+        }
+
+        // Fuzzy logic definitions - ALIGNED WITH PYTHON's SKFUZZY DEFINITIONS
+        const fuzzyDefs = {
+            ph: {
+                // pH membership functions (aligned with Python's trapmf/trimf parameters)
+                acidic: (x) => trapmf(x, 0, 0, 5.0, 6.5),
+                neutral: (x) => trimf(x, 5.5, 6.5, 7.5),
+                alkaline: (x) => trapmf(x, 7.0, 8.0, 14, 14),
+            },
+            temperature: {
+                // Temperature membership functions (°C) (aligned with Python's trapmf/trimf parameters)
+                cold: (x) => trapmf(x, 0, 0, 18, 23),
+                normal: (x) => trimf(x, 20, 26, 32),
+                hot: (x) => trapmf(x, 30, 35, 40, 40),
+            },
+            humidity: {
+                // Humidity membership functions (%) (aligned with Python's trapmf/trimf parameters)
+                low: (x) => trapmf(x, 0, 0, 45, 60),
+                medium: (x) => trimf(x, 50, 70, 85),
+                high: (x) => trapmf(x, 80, 90, 100, 100),
+            }
+        };
+
+        // Output membership functions (Simplified for direct score interpretation in JS)
+        // Aligned with Python's output MFs: unsuitable (0,0,0.3), moderate (0.2,0.5,0.8), suitable (0.7,1,1)
+        const outputSuitabilityValues = {
+            'unsuitable': (0 + 0 + 0.4) / 3, // Centroid of trimf [0,0,0.4] is approx 0.133
+            'moderate': (0.2 + 0.6 + 0.8) / 3, // Centroid of trimf [0.2,0.6,0.8] is approx 0.533
+            'suitable': (0.7 + 1.0 + 1.0) / 3, // Centroid of trimf [0.7,1.0,1.0] is approx 0.9
+        };
+
+        // Plant database (from Python's fuzzy_logic.py) - used for names and iterating
+        const plantDatabase = {
+            'Padi': {'ph': [6.0, 7.0], 'temp': [24, 29], 'humidity': [60, 90]},
+            'Jagung': {'ph': [5.6, 6.2], 'temp': [23, 27], 'humidity': [62, 74]},
+            'Kedelai': {'ph': [5.8, 7.0], 'temp': [20, 25], 'humidity': [60, 70]},
+            'Kacang_Tanah': {'ph': [6.0, 6.5], 'temp': [23, 26.5], 'humidity': [65, 75]},
+            'Kacang_Hijau': {'ph': [6.0, 6.5], 'temp': [20, 30], 'humidity': [50, 80]},
+            'Ubi_Kayu': {'ph': [4.5, 8.0], 'temp': [24, 30], 'humidity': [60, 65]},
+            'Ubi_Jalar': {'ph': [5.5, 8.0], 'temp': [21, 27], 'humidity': [65, 75]}
+        };
+
+        // Fuzzy Rules - ALIGNED WITH UPDATED PYTHON's _setup_fuzzy_rules
+        // Each rule has a 'cond' function that directly mimics the Python's fuzzy logic combination
+        // and a 'desc' for display purposes.
+        const fuzzyRules = {
+            'Padi': [
+                { cond: (ph, temp, hum) => Math.min(fuzzyDefs.ph.neutral(ph), fuzzyDefs.temperature.normal(temp), Math.max(fuzzyDefs.humidity.medium(hum), fuzzyDefs.humidity.high(hum))), suitability: 'suitable', desc: "Ideal PH, Temp, and Medium/High Humidity" },
+                { cond: (ph, temp, hum) => Math.min(fuzzyDefs.ph.acidic(ph), fuzzyDefs.temperature.normal(temp)), suitability: 'moderate', desc: "Slightly Acidic PH, Normal Temp, Medium Humidity" },
+                { cond: (ph, temp, hum) => Math.max(fuzzyDefs.ph.alkaline(ph), fuzzyDefs.temperature.cold(temp), fuzzyDefs.temperature.hot(temp), fuzzyDefs.humidity.low(hum)), suitability: 'unsuitable', desc: "Alkaline PH OR Cold/Hot Temp OR Low Humidity" }
+            ],
+            'Jagung': [
+                { cond: (ph, temp, hum) => Math.min(Math.max(fuzzyDefs.ph.acidic(ph), fuzzyDefs.ph.neutral(ph)), fuzzyDefs.temperature.normal(temp), fuzzyDefs.humidity.medium(hum)), suitability: 'suitable', desc: "Acidic/Neutral PH, Normal Temp, Medium Humidity" },
+                { cond: (ph, temp, hum) => Math.max(fuzzyDefs.ph.alkaline(ph), fuzzyDefs.temperature.cold(temp), fuzzyDefs.temperature.hot(temp), fuzzyDefs.humidity.low(hum), fuzzyDefs.humidity.high(hum)), suitability: 'unsuitable', desc: "Alkaline PH OR Cold/Hot Temp OR Low/High Humidity" }
+            ],
+            'Kedelai': [
+                { cond: (ph, temp, hum) => Math.min(fuzzyDefs.ph.neutral(ph), Math.max(fuzzyDefs.temperature.cold(temp), fuzzyDefs.temperature.normal(temp)), fuzzyDefs.humidity.medium(hum)), suitability: 'suitable', desc: "Ideal PH, Cold/Normal Temp, and Medium Humidity" },
+                { cond: (ph, temp, hum) => Math.min(fuzzyDefs.ph.acidic(ph), fuzzyDefs.humidity.medium(hum)), suitability: 'moderate', desc: "Acidic PH, Medium Humidity" },
+                { cond: (ph, temp, hum) => Math.max(fuzzyDefs.ph.alkaline(ph), fuzzyDefs.temperature.hot(temp), fuzzyDefs.humidity.low(hum), fuzzyDefs.humidity.high(hum)), suitability: 'unsuitable', desc: "Alkaline PH OR Hot Temp OR Low/High Humidity" }
+            ],
+            'Kacang_Tanah': [
+                { cond: (ph, temp, hum) => Math.min(fuzzyDefs.ph.neutral(ph), fuzzyDefs.temperature.normal(temp), fuzzyDefs.humidity.medium(hum)), suitability: 'suitable', desc: "Ideal PH, Normal Temp, and Medium Humidity" },
+                { cond: (ph, temp, hum) => Math.min(fuzzyDefs.ph.acidic(ph), fuzzyDefs.temperature.normal(temp)), suitability: 'moderate', desc: "Acidic PH, Normal Temp" },
+                { cond: (ph, temp, hum) => Math.max(fuzzyDefs.ph.alkaline(ph), fuzzyDefs.temperature.cold(temp), fuzzyDefs.temperature.hot(temp), fuzzyDefs.humidity.low(hum), fuzzyDefs.humidity.high(hum)), suitability: 'unsuitable', desc: "Alkaline PH OR Cold/Hot Temp OR Low/High Humidity" }
+            ],
+            'Kacang_Hijau': [
+                { cond: (ph, temp, hum) => Math.min(fuzzyDefs.ph.neutral(ph), Math.max(fuzzyDefs.temperature.normal(temp), fuzzyDefs.temperature.hot(temp)), Math.max(fuzzyDefs.humidity.low(hum), fuzzyDefs.humidity.medium(hum))), suitability: 'suitable', desc: "Ideal PH, Normal/Hot Temp, Low/Medium Humidity" },
+                { cond: (ph, temp, hum) => Math.min(fuzzyDefs.ph.acidic(ph), fuzzyDefs.temperature.normal(temp)), suitability: 'moderate', desc: "Acidic PH, Normal Temp" },
+                { cond: (ph, temp, hum) => Math.max(fuzzyDefs.ph.alkaline(ph), fuzzyDefs.temperature.cold(temp), fuzzyDefs.humidity.high(hum)), suitability: 'unsuitable', desc: "Alkaline PH OR Cold Temp OR High Humidity" }
+            ],
+            'Ubi_Kayu': [
+                { cond: (ph, temp, hum) => Math.min(Math.max(fuzzyDefs.ph.acidic(ph), fuzzyDefs.ph.neutral(ph), fuzzyDefs.ph.alkaline(ph)), fuzzyDefs.temperature.normal(temp), fuzzyDefs.humidity.medium(hum)), suitability: 'suitable', desc: "Broad PH tolerance, Normal Temp, Medium Humidity" },
+                { cond: (ph, temp, hum) => Math.max(fuzzyDefs.temperature.cold(temp), fuzzyDefs.temperature.hot(temp), fuzzyDefs.humidity.low(hum)), suitability: 'unsuitable', desc: "Cold/Hot Temp OR Low Humidity" }
+            ],
+            'Ubi_Jalar': [
+                { cond: (ph, temp, hum) => Math.min(Math.max(fuzzyDefs.ph.neutral(ph), fuzzyDefs.ph.alkaline(ph)), fuzzyDefs.temperature.normal(temp), fuzzyDefs.humidity.medium(hum)), suitability: 'suitable', desc: "Neutral/Alkaline PH, Normal Temp, Medium Humidity" },
+                { cond: (ph, temp, hum) => Math.max(fuzzyDefs.ph.acidic(ph), fuzzyDefs.temperature.hot(temp), fuzzyDefs.temperature.cold(temp), fuzzyDefs.humidity.low(hum), fuzzyDefs.humidity.high(hum)), suitability: 'unsuitable', desc: "Acidic PH OR Hot/Cold Temp OR Low/High Humidity" }
+            ]
+        };
+
+        function updateSimulator() {
+            const ph = parseFloat(phSlider.value);
+            const temp = parseInt(tempSlider.value);
+            const moisture = parseInt(moistureSlider.value);
+
+
+            phValue.textContent = ph.toFixed(1);
+            tempValue.textContent = temp;
+            moistureValue.textContent = moisture;
+
+            // Fuzzify inputs (get membership degrees for each term)
+            const fuzzyInputMemberships = {
+                ph: {
+                    acidic: fuzzyDefs.ph.acidic(ph),
+                    neutral: fuzzyDefs.ph.neutral(ph),
+                    alkaline: fuzzyDefs.ph.alkaline(ph)
+                },
+                temperature: {
+                    cold: fuzzyDefs.temperature.cold(temp),
+                    normal: fuzzyDefs.temperature.normal(temp),
+                    hot: fuzzyDefs.temperature.hot(temp)
+                },
+                humidity: {
+                    low: fuzzyDefs.humidity.low(moisture),
+                    medium: fuzzyDefs.humidity.medium(moisture),
+                    high: fuzzyDefs.humidity.high(moisture),
+                }
+            };
+
+            let activeRulesHTML = '';
+            const plantSuitabilityScores = {}; // To store the calculated suitability for each plant
+
+            // Initialize all plant scores to 0
+            for (const plantName in plantDatabase) {
+                plantSuitabilityScores[plantName] = 0;
+            }
+
+            for (const plantName in fuzzyRules) {
+                let suitableStrengths = [];
+                let moderateStrengths = [];
+                let unsuitableStrengths = [];
+
+                fuzzyRules[plantName].forEach(rule => {
+                    // Evaluate the condition part of the rule
+                    const ruleStrength = rule.cond(ph, temp, moisture);
+
+                    if (ruleStrength > 0) {
+                        // Display active rules with their calculated strength
+                        activeRulesHTML += `<p><strong>${plantName}</strong> - Rule: "${rule.desc}" (${rule.suitability}): Strength: ${ruleStrength.toFixed(3)}</p>`;
+
+
+                        // Aggregate outputs for the same plant based on suitability level
+                        if (rule.suitability === 'suitable') {
+                            suitableStrengths.push(ruleStrength);
+                        } else if (rule.suitability === 'moderate') {
+                            moderateStrengths.push(ruleStrength);
+                        } else if (rule.suitability === 'unsuitable') {
+                            unsuitableStrengths.push(ruleStrength);
+                        }
+                    }
+                });
+
+                // --- Aggregation (MAX operator for each output term) ---
+                const maxSuitableStrength = suitableStrengths.length > 0 ? Math.max(...suitableStrengths) : 0;
+                const maxModerateStrength = moderateStrengths.length > 0 ? Math.max(...moderateStrengths) : 0;
+                const maxUnsuitableStrength = unsuitableStrengths.length > 0 ? Math.max(...unsuitableStrengths) : 0;
+
+                // The `outputSuitabilityValues` are effectively the centroids for defuzzification.
+                let weightedSum = 0;
+                let totalStrength = 0;
+
+                if (maxSuitableStrength > 0) {
+                    weightedSum += maxSuitableStrength * outputSuitabilityValues.suitable;
+                    totalStrength += maxSuitableStrength;
+                }
+                if (maxModerateStrength > 0) {
+                    weightedSum += maxModerateStrength * outputSuitabilityValues.moderate;
+                    totalStrength += maxModerateStrength;
+                }
+                if (maxUnsuitableStrength > 0) {
+                    weightedSum += maxUnsuitableStrength * outputSuitabilityValues.unsuitable;
+                    totalStrength += maxUnsuitableStrength;
+                }
+
+                let plantOverallSuitability = 0;
+                if (totalStrength > 0) {
+                    plantOverallSuitability = weightedSum / totalStrength;
+                } else {
+                    plantOverallSuitability = 0;
+                }
+
+                plantSuitabilityScores[plantName] = plantOverallSuitability;
+            }
+
+            activeRulesEl.innerHTML = activeRulesHTML || '<p>No rules active for current inputs.</p>';
+
+            // Find the best plant and format output
+            let sortedRecommendations = Object.entries(plantSuitabilityScores)
+                .map(([plant, score]) => ({ plant, suitability_score: score }))
+                .sort((a, b) => b.suitability_score - a.suitability_score); // Sort descending
+
+            let bestPlantName = 'N/A';
+            let bestSuitabilityScore = 0;
+            let confidenceText = '0%';
+
+            if (sortedRecommendations.length > 0 && sortedRecommendations[0].suitability_score > 0) {
+                // Determine top recommendation and its confidence
+                const topPlant = sortedRecommendations[0];
+                bestPlantName = topPlant.plant;
+                bestSuitabilityScore = topPlant.suitability_score;
+                confidenceText = `${(bestSuitabilityScore * 100).toFixed(0)}%`;
+
+                // Optionally, adjust confidence text based on score range similar to Python
+                if (bestSuitabilityScore >= 0.7) {
+                    confidenceOutputEl.style.color = '#22C55E'; // Green-600
+                } else if (bestSuitabilityScore >= 0.4) {
+                    confidenceOutputEl.style.color = '#F59E0B'; // Amber-500
+                } else if (bestSuitabilityScore >= 0.2) {
+                    confidenceOutputEl.style.color = '#EF4444'; // Red-500
+                } else {
+                    confidenceOutputEl.style.color = '#6B7280'; // Gray-500
+                }
+            } else {
+                 confidenceOutputEl.style.color = '#6B7280'; // Gray-500
+            }
+
+
+            recommendationOutputEl.textContent = bestPlantName;
+            confidenceOutputEl.textContent = confidenceText;
+
+            // Update Charts
+            updateCharts(ph, temp, moisture, fuzzyInputMemberships, plantSuitabilityScores);
+        }
+
+        // --- Chart.js related functions (with annotation plugin re-enabled) ---
         function createMembershipChart(ctx, label, xData, yData, inputValue, title, xMin, xMax) {
             return new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: xData,
-                    datasets: yData.map(d => ({ ...d, borderColor: chartColors.line, borderWidth: 2, pointRadius: 0, tension: 0.1 }))
+                    datasets: yData.map(d => ({ ...d, fill: true, backgroundColor: chartColors.area, borderColor: chartColors.line, borderWidth: 2, pointRadius: 0, tension: 0.1 }))
                 },
                 options: {
                     responsive: true,
@@ -681,7 +962,7 @@
                     plugins: {
                         title: { display: true, text: title, color: chartColors.text },
                         legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } },
-                        tooltip: { enabled: false },
+                        tooltip: { enabled: false }, // Disable default tooltip, annotation handles the marker
                         annotation: {
                             annotations: {
                                 line1: {
@@ -690,6 +971,15 @@
                                     xMax: inputValue,
                                     borderColor: 'red',
                                     borderWidth: 2,
+                                    label: {
+                                        content: `Value: ${inputValue.toFixed(1)}`,
+                                        enabled: true,
+                                        position: 'top',
+                                        font: { size: 10 },
+                                        backgroundColor: 'rgba(255, 99, 132, 0.8)',
+                                        color: 'white',
+                                        yAdjust: -10
+                                    }
                                 }
                             }
                         }
@@ -712,16 +1002,28 @@
             });
         }
 
-        function createOutputChart(ctx, labels, data, centroid) {
+        function createOutputChart(ctx, labels, data) {
             return new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Suitability Level',
+                        label: 'Suitability Score',
                         data: data,
-                        backgroundColor: chartColors.area,
-                        borderColor: chartColors.line,
+                        backgroundColor: (context) => {
+                            const value = context.dataset.data[context.dataIndex];
+                            if (value >= 0.7) return '#22C55E'; // High suitability (Green)
+                            if (value >= 0.4) return '#F59E0B'; // Moderate suitability (Amber)
+                            if (value >= 0.2) return '#EF4444'; // Low suitability (Red)
+                            return '#9CA3AF'; // Very Low/Unsuitable (Gray)
+                        },
+                        borderColor: (context) => {
+                             const value = context.dataset.data[context.dataIndex];
+                            if (value >= 0.7) return '#16A34A';
+                            if (value >= 0.4) return '#D97706';
+                            if (value >= 0.2) return '#DC2626';
+                            return '#6B7280';
+                        },
                         borderWidth: 1
                     }]
                 },
@@ -731,7 +1033,7 @@
                     plugins: {
                         title: { display: false },
                         legend: { display: false },
-                        tooltip: { enabled: true }
+                        tooltip: { mode: 'index', intersect: false } // More informative tooltip
                     },
                     scales: {
                          x: {
@@ -739,7 +1041,7 @@
                             ticks: { color: chartColors.text, font: { size: 10 } }
                         },
                         y: {
-                            min: 0, max: 1,
+                            min: 0, max: 1, // Max suitability is 1.0
                             grid: { color: chartColors.grid },
                             ticks: { color: chartColors.text }
                         }
@@ -749,146 +1051,51 @@
             });
         }
 
-        // Fuzzy logic definitions
-        const fuzzyDefs = {
-            ph: {
-                asam: (x) => Math.max(0, 1 - Math.abs(x - 4.5) / 1.5),
-                netral: (x) => Math.max(0, 1 - Math.abs(x - 6.5) / 1.5),
-                basa: (x) => Math.max(0, 1 - Math.abs(x - 8.5) / 1.5),
-            },
-            temp: {
-                dingin: (x) => Math.max(0, 1 - Math.abs(x - 22) / 5),
-                normal: (x) => Math.max(0, 1 - Math.abs(x - 27) / 5),
-                panas: (x) => Math.max(0, 1 - Math.abs(x - 32) / 5),
-            },
-            moisture: {
-                rendah: (x) => Math.max(0, 1 - Math.abs(x - 40) / 20),
-                sedang: (x) => Math.max(0, 1 - Math.abs(x - 70) / 20),
-                tinggi: (x) => Math.max(0, 1 - Math.abs(x - 90) / 10),
-            }
-        };
-
-        // Simplified rule engine for demonstration
-        const rules = [
-            { conditions: { ph: 'netral', temp: 'normal', moisture: 'sedang' }, output: 'Padi' },
-            { conditions: { ph: 'netral', temp: 'normal', moisture: 'sedang' }, output: 'Jagung' },
-            { conditions: { ph: 'netral', temp: 'dingin', moisture: 'sedang' }, output: 'Kedelai' },
-            { conditions: { ph: 'asam', temp: 'normal', moisture: 'sedang' }, output: 'Kacang Tanah' },
-            { conditions: { ph: 'netral', temp: 'normal', moisture: 'rendah' }, output: 'Kacang Hijau' },
-            { conditions: { ph: 'asam', temp: 'normal', moisture: 'sedang' }, output: 'Ubi Kayu' },
-            { conditions: { ph: 'netral', temp: 'dingin', moisture: 'tinggi' }, output: 'Ubi Jalar' },
-        ];
-
-        const plantData = [
-            { id: 1, name: 'Padi', ph: [6.0, 7.0], temp: [24, 29], moisture: [60, 90] },
-            { id: 2, name: 'Jagung', ph: [5.5, 7.0], temp: [21, 30], moisture: [60, 80] },
-            { id: 3, name: 'Kedelai', ph: [6.0, 7.0], temp: [20, 25], moisture: [65, 75] },
-            { id: 4, name: 'Kacang Tanah', ph: [5.0, 6.5], temp: [25, 30], moisture: [65, 75] },
-            { id: 5, name: 'Kacang Hijau', ph: [5.8, 7.0], temp: [25, 30], moisture: [50, 80] },
-            { id: 6, name: 'Ubi Kayu', ph: [4.5, 8.0], temp: [24, 30], moisture: [60, 70] },
-            { id: 7, name: 'Ubi Jalar', ph: [5.5, 8.0], temp: [21, 27], moisture: [85, 90] }
-        ];
-
-        function updateSimulator() {
-            const ph = parseFloat(phSlider.value);
-            const temp = parseInt(tempSlider.value);
-            const moisture = parseInt(moistureSlider.value);
-
-            phValue.textContent = ph.toFixed(1);
-            tempValue.textContent = temp;
-            moistureValue.textContent = moisture;
-
-            // Fuzzify
-            const fuzzyInputs = {
-                ph: {
-                    asam: fuzzyDefs.ph.asam(ph),
-                    netral: fuzzyDefs.ph.netral(ph),
-                    basa: fuzzyDefs.ph.basa(ph)
-                },
-                temp: {
-                    dingin: fuzzyDefs.temp.dingin(temp),
-                    normal: fuzzyDefs.temp.normal(temp),
-                    panas: fuzzyDefs.temp.panas(temp)
-                },
-                moisture: {
-                    rendah: fuzzyDefs.moisture.rendah(moisture),
-                    sedang: fuzzyDefs.moisture.sedang(moisture),
-                    tinggi: fuzzyDefs.moisture.tinggi(moisture),
-                }
-            };
-
-            // Evaluate rules
-            let activeRulesHTML = '';
-            const plantScores = {};
-            plantData.forEach(p => plantScores[p.name] = 0);
-
-            rules.forEach(rule => {
-                const phStrength = fuzzyInputs.ph[rule.conditions.ph];
-                const tempStrength = fuzzyInputs.temp[rule.conditions.temp];
-                const moistureStrength = fuzzyInputs.moisture[rule.conditions.moisture];
-
-                const strength = Math.min(phStrength, tempStrength, moistureStrength);
-
-                if (strength > 0) {
-                     activeRulesHTML += `<p>IF pH is ${rule.conditions.ph} AND Temp is ${rule.conditions.temp} AND Moisture is ${rule.conditions.moisture} THEN ${rule.output} (Strength: ${strength.toFixed(2)})</p>`;
-                     plantScores[rule.output] = Math.max(plantScores[rule.output], strength); // Aggregation with MAX
-                }
-            });
-
-            activeRulesEl.innerHTML = activeRulesHTML || '<p>No matching rules.</p>';
-
-            // Defuzzify (Find best plant)
-            let bestPlant = 'N/A';
-            let maxScore = 0;
-            for (const plant in plantScores) {
-                if (plantScores[plant] > maxScore) {
-                    maxScore = plantScores[plant];
-                    bestPlant = plant;
-                }
-            }
-
-            recommendationOutputEl.textContent = bestPlant;
-            confidenceOutputEl.textContent = `${(maxScore * 100).toFixed(0)}%`;
-
-            // Update Charts
-            updateCharts(ph, temp, moisture, fuzzyInputs, plantScores);
-        }
-
-        function updateCharts(ph, temp, moisture, fuzzyInputs, plantScores) {
-            // Update input charts with current value line
+        function updateCharts(ph, temp, moisture, fuzzyInputMemberships, plantSuitabilityScores) {
+            // Update input charts with current value line and active MFs
             [phChart, tempChart, moistureChart].forEach(chart => {
-                let value;
-                if (chart.canvas.id === 'phChart') value = ph;
-                else if (chart.canvas.id === 'tempChart') value = temp;
-                else value = moisture;
+                let value, membershipSet;
+                if (chart.canvas.id === 'phChart') {
+                    value = ph;
+                    membershipSet = fuzzyInputMemberships.ph;
+                } else if (chart.canvas.id === 'tempChart') {
+                    value = temp;
+                    membershipSet = fuzzyInputMemberships.temperature;
+                } else {
+                    value = moisture;
+                    membershipSet = fuzzyInputMemberships.humidity;
+                }
 
+                // Update annotation line position and label
                 if (chart.options.plugins.annotation && chart.options.plugins.annotation.annotations && chart.options.plugins.annotation.annotations.line1) {
                     chart.options.plugins.annotation.annotations.line1.xMin = value;
                     chart.options.plugins.annotation.annotations.line1.xMax = value;
+                    chart.options.plugins.annotation.annotations.line1.label.content = `Value: ${value.toFixed(1)}`;
                 }
 
-                chart.data.datasets.forEach((dataset, i) => {
+                // Highlight membership functions that have a degree > 0
+                chart.data.datasets.forEach((dataset) => {
+                    // Normalize label to match fuzzyDefs keys (e.g., 'Acidic' -> 'acidic')
                     const term = dataset.label.toLowerCase();
-                    let parent;
-                    if (chart.canvas.id === 'phChart') parent = 'ph';
-                    else if (chart.canvas.id === 'tempChart') parent = 'temp';
-                    else parent = 'moisture';
+                    const membershipValue = membershipSet[term];
 
-                    if (fuzzyInputs[parent][term] > 0) {
-                        dataset.borderColor = 'red'; // Highlight active membership function
+                    if (membershipValue > 0) {
+                        dataset.borderColor = 'red';
                         dataset.borderWidth = 3;
                     } else {
                         dataset.borderColor = chartColors.line;
                         dataset.borderWidth = 2;
                     }
                 });
-                chart.update('none'); // Use 'none' for instant update without animation
+                chart.update('none');
             });
 
             // Update output chart
             if (outputChart) {
-                outputChart.data.labels = Object.keys(plantScores);
-                outputChart.data.datasets[0].data = Object.values(plantScores);
+                // Ensure labels match the order of data for consistency
+                const orderedPlantNames = Object.keys(plantDatabase); // Use actual plant names from the data
+                outputChart.data.labels = orderedPlantNames;
+                outputChart.data.datasets[0].data = orderedPlantNames.map(name => plantSuitabilityScores[name]);
                 outputChart.update();
             }
         }
@@ -899,7 +1106,7 @@
             const ph_max = parseFloat(phSlider.max);
             const ph_step = parseFloat(phSlider.step);
 
-            const temp_min = parseFloat(tempSlider.min); // Use parseFloat for consistency, even if it's an int step
+            const temp_min = parseFloat(tempSlider.min);
             const temp_max = parseFloat(tempSlider.max);
             const temp_step = parseFloat(tempSlider.step);
 
@@ -908,60 +1115,64 @@
             const moisture_step = parseFloat(moistureSlider.step);
 
             // Generate xData arrays based on actual slider ranges and steps
-            // The length calculation needs to be precise for floating point steps
-            const x_ph = Array.from({length: Math.floor((ph_max - ph_min) / ph_step) + 1}, (_, i) => parseFloat((ph_min + i * ph_step).toFixed(10))); // Added .toFixed(10) to mitigate float precision issues
+            const x_ph = Array.from({length: Math.floor((ph_max - ph_min) / ph_step) + 1}, (_, i) => parseFloat((ph_min + i * ph_step).toFixed(1)));
             phChart = createMembershipChart(
                 document.getElementById('phChart').getContext('2d'),
                 'pH',
                 x_ph,
                 [
-                    { label: 'Asam', data: x_ph.map(fuzzyDefs.ph.asam) },
-                    { label: 'Netral', data: x_ph.map(fuzzyDefs.ph.netral) },
-                    { label: 'Basa', data: x_ph.map(fuzzyDefs.ph.basa) },
+                    { label: 'Acidic', data: x_ph.map(fuzzyDefs.ph.acidic) },
+                    { label: 'Neutral', data: x_ph.map(fuzzyDefs.ph.neutral) },
+                    { label: 'Alkaline', data: x_ph.map(fuzzyDefs.ph.alkaline) },
                 ],
                 parseFloat(phSlider.value),
                 'Soil pH',
-                ph_min, // Pass min for x-axis scale
-                ph_max  // Pass max for x-axis scale
+                ph_min,
+                ph_max
             );
 
             const x_temp = Array.from({length: Math.floor((temp_max - temp_min) / temp_step) + 1}, (_, i) => temp_min + i * temp_step);
             tempChart = createMembershipChart(
                 document.getElementById('tempChart').getContext('2d'),
-                'Suhu',
+                'Temperature',
                 x_temp,
                 [
-                    { label: 'Dingin', data: x_temp.map(fuzzyDefs.temp.dingin) },
-                    { label: 'Normal', data: x_temp.map(fuzzyDefs.temp.normal) },
-                    { label: 'Panas', data: x_temp.map(fuzzyDefs.temp.panas) },
+                    { label: 'Cold', data: x_temp.map(fuzzyDefs.temperature.cold) },
+                    { label: 'Normal', data: x_temp.map(fuzzyDefs.temperature.normal) },
+                    { label: 'Hot', data: x_temp.map(fuzzyDefs.temperature.hot) },
                 ],
-                parseFloat(tempSlider.value), // Use parseFloat for consistency
+                parseFloat(tempSlider.value),
                 'Temperature',
-                temp_min, // Pass min for x-axis scale
-                temp_max  // Pass max for x-axis scale
+                temp_min,
+                temp_max
             );
 
             const x_moisture = Array.from({length: Math.floor((moisture_max - moisture_min) / moisture_step) + 1}, (_, i) => moisture_min + i * moisture_step);
             moistureChart = createMembershipChart(
                 document.getElementById('moistureChart').getContext('2d'),
-                'Kelembaban',
+                'Moisture',
                 x_moisture,
                 [
-                    { label: 'Rendah', data: x_moisture.map(fuzzyDefs.moisture.rendah) },
-                    { label: 'Sedang', data: x_moisture.map(fuzzyDefs.moisture.sedang) },
-                    { label: 'Tinggi', data: x_moisture.map(fuzzyDefs.moisture.tinggi) },
+                    { label: 'Low', data: x_moisture.map(fuzzyDefs.humidity.low) },
+                    { label: 'Medium', data: x_moisture.map(fuzzyDefs.humidity.medium) },
+                    { label: 'High', data: x_moisture.map(fuzzyDefs.humidity.high) },
                 ],
-                parseFloat(moistureSlider.value), // Use parseFloat for consistency
+                parseFloat(moistureSlider.value),
                 'Moisture',
-                moisture_min, // Pass min for x-axis scale
-                moisture_max  // Pass max for x-axis scale
+                moisture_min,
+                moisture_max
             );
+
+            // Initialize output chart with all plant names and zero scores
+            const initialPlantScores = {};
+            for (const plantName in plantDatabase) { // Use plantDatabase for keys
+                initialPlantScores[plantName] = 0;
+            }
 
             outputChart = createOutputChart(
                 document.getElementById('outputChart').getContext('2d'),
-                plantData.map(p => p.name),
-                plantData.map(() => 0),
-                0
+                Object.keys(plantDatabase),
+                Object.values(initialPlantScores)
             );
 
             // Set initial slider values to 0
