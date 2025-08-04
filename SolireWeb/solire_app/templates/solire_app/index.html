@@ -590,50 +590,109 @@
             }
         }
 
-        const client = mqtt.connect(
-            "wss://piperbelly008:5wtOnOVrFYnyBP7T@piperbelly008.cloud.shiftr.io",
-            {
-                clientId: "SolireWeb",
-            }
-        );
+        // Variable to keep track of the MQTT client's connection state
+        let mqttConnected = false;
+        let mqttClient = null;
 
-        client.on("connect", function () {
-            console.log("Connected to MQTT broker!");
+        // The MQTT connection logic, extracted into a reusable function
+        function connectMqtt() {
+            console.log("Attempting to connect to MQTT broker...");
+            mqttClient = mqtt.connect(
+                "wss://piperbelly008:5wtOnOVrFYnyBP7T@piperbelly008.cloud.shiftr.io",
+                {
+                    clientId: "SolireWeb",
+                }
+            );
 
-            client.subscribe("Sensors");
-        });
+            mqttClient.on("connect", function () {
+                console.log("Connected to MQTT broker!");
+                mqttConnected = true;
+                mqttClient.subscribe("Sensors");
+            });
 
-        client.on("message", function (topic, message) {
-            message = message.toString().replace(/\\/g, "");
-            console.log("Received MQTT message:", JSON.parse(message));
-            const data = JSON.parse(message); // Parse once
+            mqttClient.on("message", function (topic, message) {
+                // Your existing message handling logic goes here
+                message = message.toString().replace(/\\/g, "");
+                console.log("Received MQTT message:", JSON.parse(message));
+                const data = JSON.parse(message); // Parse once
 
-            document.getElementById("realtime_ph").textContent =  data.ph_value;
-            document.getElementById("realtime_moisture").textContent =  data.moisture_percent;
-            document.getElementById("realtime_temperature").textContent =  data.temperature_c;
+                document.getElementById("realtime_ph").textContent =  data.ph_value;
+                document.getElementById("realtime_moisture").textContent =  data.moisture_percent;
+                document.getElementById("realtime_temperature").textContent =  data.temperature_c;
 
-            if (LiveFeedTable.rows().count() >= 5) {
-                LiveFeedTable.row(LiveFeedTable.rows().count() - 1).remove().draw();
-            }
+                // Format the row data with current timestamp
+                const rowData = {
+                    ph_value: data.ph_value,
+                    moisture_value: data.moisture_percent,
+                    temperature_value: data.temperature_c,
+                    timestamps: new Date().toISOString()
+                };
 
-            LiveFeedTable.row.add({
-                ph_value: data.ph_value,
-                moisture_value: data.moisture_percent,
-                temperature_value: data.temperature_c,
-                timestamps: new Date().toISOString()
-            }).draw().order([3, 'desc']).draw();
+                // Maintain a static array buffer of last 5 entries
+                if (!window.liveFeedBuffer) window.liveFeedBuffer = [];
 
-            insertData("{% url 'solire_app:insert_data' %}", JSON.stringify(data))
-                .then(() => {
-                    console.log('Data inserted successfully');
-                })
-                .catch(error => {
-                    console.error('Error inserting data via MQTT:', error);
+                // Add new data to the start
+                window.liveFeedBuffer.unshift(rowData);
+
+                // Keep only 5 most recent entries
+                if (window.liveFeedBuffer.length > 5) {
+                    window.liveFeedBuffer.pop(); // remove the oldest one
+                }
+
+                // Clear and re-render the LiveFeedTable with latest 5 rows
+                LiveFeedTable.clear();
+                LiveFeedTable.rows.add(window.liveFeedBuffer);
+                LiveFeedTable.draw();
+
+                insertData("{% url 'solire_app:insert_data' %}", JSON.stringify(data))
+                    .then(() => {
+                        console.log('Data inserted successfully');
+                    })
+                    .catch(error => {
+                        console.error('Error inserting data via MQTT:', error);
+                    });
+            });
+
+            mqttClient.on("error", function (error) {
+                console.error("MQTT error:", error);
+                // It's a good practice to handle connection errors and disconnections.
+                // The `connectMqtt` function could be called again here after a delay.
+            });
+
+            mqttClient.on("close", function() {
+              console.log("MQTT connection closed.");
+              mqttConnected = false;
+              mqttClient = null;
+            });
+        }
+
+        // Function to disconnect from MQTT
+        function disconnectMqtt() {
+            if (mqttClient) {
+                console.log("Disconnecting from MQTT broker...");
+                mqttClient.end(true, () => {
+                    console.log("Disconnected successfully.");
+                    mqttConnected = false;
+                    mqttClient = null;
                 });
-        });
+            }
+        }
 
-        client.on("error", function (error) {
-            console.error("MQTT error:", error);
+        // Event listener for the keyboard shortcut
+        document.addEventListener('keydown', function(event) {
+            // Check for Shift, Ctrl, and Backspace keys pressed simultaneously
+            if (event.shiftKey && event.ctrlKey && event.key === 'Backspace') {
+                event.preventDefault(); // Prevent the default browser action (e.g., navigating back)
+
+                // Toggle the connection state
+                if (mqttConnected) {
+                    disconnectMqtt();
+                    alert('Disconnected successfully!');
+                } else {
+                    connectMqtt();
+                    alert('Connected successfully!');
+                }
+            }
         });
 
         // Buttons
