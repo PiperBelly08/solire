@@ -4,7 +4,7 @@ from django.db import models
 class SoilCondition(models.Model):
     id = models.AutoField(primary_key=True)
     ph_value = models.FloatField()
-    temperature_value = models.IntegerField()
+    temperature_value = models.FloatField()
     moisture_value = models.IntegerField()
     # rgb_value = models.IntegerField()
     timestamps = models.DateTimeField(auto_now_add=True)

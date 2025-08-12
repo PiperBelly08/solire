@@ -220,20 +220,20 @@
             </div>
 
             <div class="row mb-4">
-                <div class="col-md-6 mb-4">
+                <div class="col-md-12 mb-4">
                     <div class="card stats-card h-100 w-100">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h6 class="card-title mb-2 text-white-50">Recommended Plant(s)</h6>
-                                    <p class="stat-number">N/A</p>
+                                    <h6 class="card-title mb-2 text-white-50">Recommended Plant</h6>
+                                    <p class="stat-number" id="recommended_plants">N/A</p>
                                 </div>
                                 <i class="bi bi-flower3 fs-1 opacity-50"></i>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6 mb-4">
+                <div class="col-md-6 mb-4 d-none">
                     <div class="card stats-card h-100 w-100">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
@@ -448,6 +448,9 @@
 
         let data = [];
 
+        const RecommendedPlantsCard = document.getElementById('recommended_plants');
+        const RecommendedPlantsScoreCard = document.getElementById('dashboard_percentages');
+
         const DatabaseTable = new DataTable('#soilConditionsTable', {
             responsive: true,
         });
@@ -474,11 +477,16 @@
         });
 
         function formatTimestamp(timestamp) {
-            const date = new Date(timestamp);
+            const jakartaTime = new Date(timestamp).toLocaleString('en-US', {
+                timeZone: 'Asia/Jakarta'
+            });
+
+            const date = new Date(jakartaTime);
 
             const day = String(date.getDate()).padStart(2, '0');
             const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
             const year = date.getFullYear();
+
             const hours = String(date.getHours()).padStart(2, '0');
             const minutes = String(date.getMinutes()).padStart(2, '0');
             const seconds = String(date.getSeconds()).padStart(2, '0');
@@ -533,6 +541,32 @@
                 const response = await fetch(url);
                 const data = await response.json();
                 return data;
+            } catch (error) {
+                console.error('Fetch error:', error);
+                throw error;
+            }
+        }
+
+        async function fetchDataPost(url, data) {
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken(), // Include CSRF token
+                    },
+                    body: data
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    console.log('Success (post):', result);
+                    return result;
+                } else {
+                    console.error('Error (post):', result);
+                    throw new Error(result);
+                }
             } catch (error) {
                 console.error('Fetch error:', error);
                 throw error;
@@ -616,6 +650,7 @@
                 console.log("Received MQTT message:", JSON.parse(message));
                 const data = JSON.parse(message); // Parse once
 
+
                 document.getElementById("realtime_ph").textContent =  data.ph_value;
                 document.getElementById("realtime_moisture").textContent =  data.moisture_percent;
                 document.getElementById("realtime_temperature").textContent =  data.temperature_c;
@@ -643,6 +678,22 @@
                 LiveFeedTable.clear();
                 LiveFeedTable.rows.add(window.liveFeedBuffer);
                 LiveFeedTable.draw();
+
+                fetchDataPost("{% url 'solire_app:recommendation_plants' %}", JSON.stringify({
+                        ph: data.ph_value,
+                        humidity: data.moisture_percent,
+                        temp: data.temperature_c,
+                    }))
+                    .then((data) => {
+                        RecommendedPlantsCard.innerHTML = "";
+                        RecommendedPlantsScoreCard.innerHTML = "";
+
+                        RecommendedPlantsCard.innerHTML = `${data.top_recommendation.plant.split('_').join(' ')}`;
+                        RecommendedPlantsScoreCard.innerHTML = `${(data.top_recommendation.suitability_score * 100)}`;
+                    })
+                    .catch(error => {
+                        console.error('Error inserting data via MQTT:', error);
+                    });
 
                 insertData("{% url 'solire_app:insert_data' %}", JSON.stringify(data))
                     .then(() => {
@@ -706,13 +757,15 @@
                         console.log(response.data);
                         DatabaseTable.clear();
                         response.data.forEach((item, index) => {
+                            //console.log(item.timestamps);
+                            let formattedDate = new Date(item.timestamps).toISOString();
                             DatabaseTable.row.add([
                                 index + 1, // Use index for numbering
                                 item.ph_value,
                                 item.moisture_value,
                                 item.temperature_value,
                                 formatRecommendedPlants(item.recommended_plants),
-                                formatTimestamp(item.timestamps),
+                                formatTimestamp(formattedDate),
                             ]);
                         });
                         DatabaseTable.draw();

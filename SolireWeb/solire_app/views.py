@@ -21,6 +21,7 @@ def index(request):
         },
     )
 
+
 @require_http_methods(["POST"])
 def insert_data(request):
     try:
@@ -68,6 +69,7 @@ def insert_data(request):
             'type': type(e).__name__
         }, status=500)
 
+
 @require_http_methods(["GET"])
 def list_data(request):
     try:
@@ -81,6 +83,7 @@ def list_data(request):
             'success': False,
             'error': str(e)
         }, status=500)
+
 
 @require_http_methods(["GET"])
 def list_data_with_recommendation(request):
@@ -172,7 +175,7 @@ def generate_report(request):
     Generate an Excel report from the database.
     """
     try:
-        soil_conditions = SoilCondition.objects.all().order_by('-timestamps')
+        soil_conditions = SoilCondition.objects.all().order_by('timestamps')
         wb = Workbook()
         ws = wb.active
 
@@ -258,6 +261,7 @@ def generate_report(request):
             'success': False,
             'error': str(e)
         }, status=500)
+
 
 def recommend_plant(request):
     if request.method == 'GET':
