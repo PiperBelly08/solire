@@ -2,6 +2,7 @@
 #include <MQTT.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include <ArduinoJson.h>
 
 // WiFi credentials will be managed by WiFiManager
 // MQTT Broker details
@@ -10,10 +11,8 @@ const int mqtt_port = 1883; // Default MQTT port
 const char* mqtt_user = "piperbelly008";
 const char* mqtt_password = "XMursJDSPQStqLz6";
 
-// MQTT Topic to publish to
-const char* publish_topic = "Sensors";
-// MQTT Topic to subscribe to
-const char* subscribe_topic = "Sensors";
+// MQTT Topic for combined sensor data
+const char* topic = "Sensors"; // Keep existing subscribe topic
 
 WiFiClient net;
 MQTTClient client;
@@ -34,6 +33,9 @@ const char* MQTT_ID = "SolireSense";
 // Temperature
 #define ONE_WIRE_BUS 4
 
+// Buzzer
+#define BUZZER_PIN 16
+
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 
@@ -46,7 +48,7 @@ void connectMqtt() {
 
   Serial.println("\nConnected!");
 
-  client.subscribe(subscribe_topic);
+  client.subscribe(topic);
 }
 
 void messageReceived(String &topic, String &payload) {
@@ -99,6 +101,9 @@ void setup() {
   pinMode(DMS_PIN, OUTPUT);
   digitalWrite(DMS_PIN, HIGH); // Turn off DMS
 
+  // Buzzer
+  pinMode(BUZZER_PIN, OUTPUT);
+
   setupWiFi();
 
   client.begin("piperbelly008.cloud.shiftr.io", net);
@@ -109,83 +114,59 @@ void setup() {
 void loop() {
   client.loop();
 
-  // check if connected
+  // Check if connected
   if (!client.connected()) {
     connectMqtt();
   }
 
+  // --- Read Sensors ---
+
   // Temperature
-  // Send the command for all devices on the bus to perform a temperature conversion:
   sensors.requestTemperatures();
-
-  for (int i = 0;  i < deviceCount;  i++) {
-    Serial.print("Sensor ");
-    Serial.print(i + 1);
-    Serial.print(" : ");
-    tempC = sensors.getTempCByIndex(i);
-    tempF = sensors.getTempFByIndex(i);
-    Serial.print(tempC);
-    Serial.print(" \xC2\xB0"); // shows degree symbol
-    Serial.print("C  |  ");
-    Serial.print(tempF);
-    Serial.print(" \xC2\xB0"); // shows degree symbol
-    Serial.println("F");
-  }
-
-  Serial.println();
+  tempC = sensors.getTempCByIndex(0);
+  tempF = sensors.getTempFByIndex(0);
 
   // Moisture
-  Serial.println();
-
-  Serial.print("Mo: ");
   moistureLevelAnalog = analogRead(MOISTURE_SENSOR_ANALOG_PIN);
-  Serial.print(moistureLevelAnalog);
-  Serial.print("(A) | ");
   moistureLevelDigital = digitalRead(MOISTURE_SENSOR_DIGITAL_PIN);
-  Serial.print(moistureLevelDigital);
-  Serial.print("(D)");
-  Serial.println();
   int moisturePercent = map(moistureLevelAnalog, 300, 1023, 100, 0);
   moisturePercent = constrain(moisturePercent, 0, 100);
-  Serial.print("Moisture: ");
-  Serial.print(moisturePercent);
-  Serial.println("%");
-  Serial.println();
-
-  Serial.println();
 
   // PH
   digitalWrite(DMS_PIN, LOW); // Turn on DMS
   delay(1000 * 10);
-
   phAdc = analogRead(ADC_PIN);
   pH = (-0.023 * phAdc) + 12.627;
-  if (pH != lastReading) { 
-    lastReading = pH; 
-  }
-  Serial.print("PH ADC: ");
-  Serial.print(phAdc);
-  Serial.print(" | pH: ");
-  Serial.println(lastReading, 1);
-
+  lastReading = pH;
   digitalWrite(DMS_PIN, HIGH);
   delay(1000 * 3);
 
-  Serial.println();
+  // --- Publish all data to a single topic ---
 
-  // Construct JSON string
-  String payload = "{";
-  payload += "\"temperature_c\":" + String(tempC, 2) + ",";
-  payload += "\"temperature_f\":" + String(tempF, 2) + ",";
-  payload += "\"moisture_percent\":" + String(moisturePercent) + ",";
-  // payload += "\"ph_adc\":" + String(phAdc) + ",";
-  payload += "\"ph_value\":" + String(lastReading, 2);
-  payload += "}";
+  DynamicJsonDocument allSensorDoc(256); // Increased size to accommodate all data
 
-  // Debug: print the payload
-  Serial.println("Publishing payload:");
-  Serial.println(payload);
+  // Add Temperature data
+  allSensorDoc["temperature_c"] = tempC;
+  allSensorDoc["temperature_f"] = tempF;
 
-  // Publish to MQTT
-  client.publish(publish_topic, payload);
+  // Add Moisture data
+  allSensorDoc["moisture_analog"] = moistureLevelAnalog;
+  allSensorDoc["moisture_digital"] = moistureLevelDigital;
+  allSensorDoc["moisture_percent"] = moisturePercent;
+
+  // Add PH data
+  allSensorDoc["ph_adc"] = phAdc;
+  allSensorDoc["ph_value"] = lastReading;
+
+  char combinedJsonBuffer[256]; // Increased buffer size
+  serializeJson(allSensorDoc, combinedJsonBuffer);
+  client.publish(topic, combinedJsonBuffer);
+  Serial.print("Published to ");
+  Serial.print(topic);
+  Serial.print(": ");
+  Serial.println(combinedJsonBuffer);
+
+  Serial.println(); // Add a newline for readability in the serial monitor
+  
+  tone(BUZZER_PIN, 1000); delay(150); noTone(BUZZER_PIN); delay(50);
 }
